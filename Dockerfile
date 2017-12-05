@@ -9,4 +9,4 @@ ENV ASPNETCORE_URLS http://*:5000
 EXPOSE 5000
 
 # Start the app
-ENTRYPOINT dotnet Voidwell.dll
+ENTRYPOINT dotnet Voidwell.Internal.dll
