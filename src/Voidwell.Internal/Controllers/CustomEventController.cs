@@ -29,6 +29,13 @@ namespace Voidwell.Internal.Controllers
             return Ok(result);
         }
 
+        [HttpGet("game/{gameId}")]
+        public async Task<ActionResult> GetAllCustomEventsByGame(string gameId)
+        {
+            var result = await _customEventService.GetAllCustomEvents(gameId);
+            return Ok(result);
+        }
+
         [HttpPost]
         public async Task<ActionResult> PostCustomEvent([FromBody] CustomEvent customEvent)
         {

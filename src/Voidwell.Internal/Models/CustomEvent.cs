@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace Voidwell.Internal.Models
@@ -17,7 +16,7 @@ namespace Voidwell.Internal.Models
         public string GameId { get; set; }
         public IEnumerable<CustomEventTeam> Teams { get; set; }
 
-        public JToken Log { get; set; }
-        public JToken Score { get; set; }
+        public object Log { get; set; }
+        public object Score { get; set; }
     }
 }

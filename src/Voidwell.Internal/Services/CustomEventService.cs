@@ -53,7 +53,41 @@ namespace Voidwell.Internal.Services
                 };
             });
 
-            await _cache.SetAsync("customEventlist", customEvents, TimeSpan.FromMinutes(30));
+            await _cache.SetAsync("customEventlist", customEvents, TimeSpan.FromMinutes(5));
+
+            return customEvents;
+        }
+
+        public async Task<IEnumerable<CustomEvent>> GetAllCustomEvents(string gameId)
+        {
+            var cachedEvents = await _cache.GetAsync<IEnumerable<CustomEvent>>($"customEventlist_{gameId}");
+
+            if (cachedEvents != null)
+                return cachedEvents;
+
+            var dbContext = _dbContextFactory();
+
+            var results = await dbContext.CustomEvents.Where(e => e.IsPrivate == false && e.GameId == gameId)
+                .OrderByDescending(e => e.StartDate)
+                .ToListAsync();
+
+            var customEvents = results.Select(r =>
+            {
+                return new CustomEvent
+                {
+                    Id = r.Id,
+                    Name = r.Name,
+                    Description = r.Description,
+                    ServerId = r.ServerId,
+                    MapId = r.MapId,
+                    StartDate = r.StartDate,
+                    EndDate = r.EndDate,
+                    IsPrivate = r.IsPrivate,
+                    GameId = r.GameId
+                };
+            });
+
+            await _cache.SetAsync($"customEventlist_{gameId}", customEvents, TimeSpan.FromMinutes(5));
 
             return customEvents;
         }
@@ -63,15 +97,33 @@ namespace Voidwell.Internal.Services
             var cacheKey = $"customEventLog:{eventId}";
 
             var cachedEvent = await _cache.GetAsync<CustomEvent>(cacheKey);
-
             if (cachedEvent != null)
                 return cachedEvent;
 
             var dbContext = _dbContextFactory();
 
-            var result = await dbContext.CustomEvents
-                .Include(a => a.Teams)
-                .SingleOrDefaultAsync(e => e.Id == eventId);
+            var result = (from e in dbContext.CustomEvents
+                          where e.Id == eventId
+                          select new DbCustomEvent
+                          {
+                             Id = e.Id,
+                             Name = e.Name,
+                             Description = e.Description,
+                             GameId = e.GameId,
+                             IsPrivate = e.IsPrivate,
+                             StartDate = e.StartDate,
+                             EndDate = e.EndDate,
+                             ServerId = e.ServerId,
+                             MapId = e.MapId,
+                             Teams = (from t in dbContext.CustomEventTeams
+                                      where t.EventId == e.Id
+                                      select new DbCustomEventTeam
+                                      {
+                                          EventId = t.EventId,
+                                          TeamId = t.TeamId,
+                                          Name = t.Name
+                                      }).ToList()
+                          }).ToList().FirstOrDefault();
 
             var reportTask = _daybreakGamesClient.GetCombatReport(result.ServerId, result.MapId, result.StartDate, result.EndDate);
             var territoryTask = _daybreakGamesClient.GetTerritoryScoreFromDate(result.ServerId, result.MapId, result.EndDate);
@@ -94,7 +146,7 @@ namespace Voidwell.Internal.Services
                 Score = territoryTask.Result
             };
 
-            await _cache.SetAsync(cacheKey, customEvent, TimeSpan.FromMinutes(60));
+            await _cache.SetAsync(cacheKey, customEvent, TimeSpan.FromMinutes(15));
 
             return customEvent;
         }

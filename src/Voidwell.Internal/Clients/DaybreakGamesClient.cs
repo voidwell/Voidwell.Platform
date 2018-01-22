@@ -1,7 +1,7 @@
-﻿using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Voidwell.Internal.Models;
 
 namespace Voidwell.Internal.Clients
 {
@@ -12,21 +12,34 @@ namespace Voidwell.Internal.Clients
         public DaybreakGamesClient()
         {
             _httpClient = new HttpClient();
-            _httpClient.BaseAddress = new Uri("http://daybreakgames:5000");
+            _httpClient.BaseAddress = new Uri("http://voidwelldaybreakgames:5000");
         }
 
-        public async Task<JToken> GetCombatReport(string worldId, string zoneId, DateTime startDate, DateTime endDate)
+        public async Task<object> GetCombatReport(string worldId, string zoneId, DateTime startDate, DateTime endDate)
         {
-            var combatReport = await _httpClient.GetAsync("ps2/combatReport/{serverId}/{mapId}/{startDate}/{endDate}");
-            var content = await combatReport.Content.ReadAsStringAsync();
-            return JToken.FromObject(content);
+            var request = new CombatReportRequest
+            {
+                WorldId = worldId,
+                ZoneId = zoneId,
+                StartDate = startDate,
+                EndDate = endDate
+            };
+            var content = JsonContent.FromObject(request);
+            var response = await _httpClient.PostAsync("ps2/combatReport", content);
+            return await response.Content.ReadAsObjectAsync<object>();
         }
 
-        public async Task<JToken> GetTerritoryScoreFromDate(string worldId, string zoneId, DateTime endDate)
+        public async Task<object> GetTerritoryScoreFromDate(string worldId, string zoneId, DateTime endDate)
         {
-            var combatReport = await _httpClient.GetAsync("ps2/map/territory{serverId}/{mapId}/{startDate}/{endDate}");
-            var content = await combatReport.Content.ReadAsStringAsync();
-            return JToken.FromObject(content);
+            var request = new CombatReportRequest
+            {
+                WorldId = worldId,
+                ZoneId = zoneId,
+                EndDate = endDate
+            };
+            var content = JsonContent.FromObject(request);
+            var response = await _httpClient.PostAsync("ps2/map/territory", content);
+            return await response.Content.ReadAsObjectAsync<object>();
         }
 
         public void Dispose()

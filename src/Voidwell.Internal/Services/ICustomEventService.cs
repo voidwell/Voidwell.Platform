@@ -7,6 +7,7 @@ namespace Voidwell.Internal.Services
     public interface ICustomEventService
     {
         Task<IEnumerable<CustomEvent>> GetAllCustomEvents();
+        Task<IEnumerable<CustomEvent>> GetAllCustomEvents(string gameId);
         Task<CustomEvent> GetCustomEvent(string eventId);
         Task<CustomEvent> CreateCustomEvent(CustomEvent customEvent);
         Task<CustomEvent> UpdateCustomEvent(string eventId, CustomEvent customEvent);
