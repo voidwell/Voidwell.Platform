@@ -20,7 +20,7 @@ namespace Voidwell.Internal.Controllers
         [HttpGet]
         public async Task<ActionResult> GetAllBlogPosts()
         {
-            var result = await _blogService.GetBlogPosts();
+            var result = await _blogService.GetBlogPosts(10, 0);
             return Ok(result);
         }
 

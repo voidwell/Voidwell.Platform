@@ -27,15 +27,33 @@ namespace Voidwell.Internal.Services
         public async Task<IEnumerable<CustomEvent>> GetAllCustomEvents()
         {
             var cachedEvents = await _cache.GetAsync<IEnumerable<CustomEvent>>("customEventlist");
-
             if (cachedEvents != null)
                 return cachedEvents;
 
             var dbContext = _dbContextFactory();
 
-            var results = await dbContext.CustomEvents.Where(e => e.IsPrivate == false)
-                .OrderByDescending(e => e.StartDate)
-                .ToListAsync();
+            var results = (from e in dbContext.CustomEvents
+                                 orderby e.StartDate descending
+                                 select new DbCustomEvent
+                                 {
+                                     Id = e.Id,
+                                     Name = e.Name,
+                                     Description = e.Description,
+                                     GameId = e.GameId,
+                                     IsPrivate = e.IsPrivate,
+                                     StartDate = e.StartDate,
+                                     EndDate = e.EndDate,
+                                     ServerId = e.ServerId,
+                                     MapId = e.MapId,
+                                     Teams = (from t in dbContext.CustomEventTeams
+                                              where t.EventId == e.Id
+                                              select new DbCustomEventTeam
+                                              {
+                                                  EventId = t.EventId,
+                                                  TeamId = t.TeamId,
+                                                  Name = t.Name
+                                              }).ToList()
+                                 }).ToList();
 
             var customEvents = results.Select(r =>
             {
@@ -49,7 +67,8 @@ namespace Voidwell.Internal.Services
                     StartDate = r.StartDate,
                     EndDate = r.EndDate,
                     IsPrivate = r.IsPrivate,
-                    GameId = r.GameId
+                    GameId = r.GameId,
+                    Teams = r.Teams?.Select(a => new CustomEventTeam { TeamId = a.TeamId, Name = a.Name })
                 };
             });
 
@@ -67,9 +86,29 @@ namespace Voidwell.Internal.Services
 
             var dbContext = _dbContextFactory();
 
-            var results = await dbContext.CustomEvents.Where(e => e.IsPrivate == false && e.GameId == gameId)
-                .OrderByDescending(e => e.StartDate)
-                .ToListAsync();
+            var results = (from e in dbContext.CustomEvents
+                           where e.GameId == gameId
+                           orderby e.StartDate descending
+                           select new DbCustomEvent
+                           {
+                               Id = e.Id,
+                               Name = e.Name,
+                               Description = e.Description,
+                               GameId = e.GameId,
+                               IsPrivate = e.IsPrivate,
+                               StartDate = e.StartDate,
+                               EndDate = e.EndDate,
+                               ServerId = e.ServerId,
+                               MapId = e.MapId,
+                               Teams = (from t in dbContext.CustomEventTeams
+                                        where t.EventId == e.Id
+                                        select new DbCustomEventTeam
+                                        {
+                                            EventId = t.EventId,
+                                            TeamId = t.TeamId,
+                                            Name = t.Name
+                                        }).ToList()
+                           }).ToList();
 
             var customEvents = results.Select(r =>
             {
@@ -83,7 +122,8 @@ namespace Voidwell.Internal.Services
                     StartDate = r.StartDate,
                     EndDate = r.EndDate,
                     IsPrivate = r.IsPrivate,
-                    GameId = r.GameId
+                    GameId = r.GameId,
+                    Teams = r.Teams?.Select(a => new CustomEventTeam { TeamId = a.TeamId, Name = a.Name })
                 };
             });
 
@@ -92,45 +132,24 @@ namespace Voidwell.Internal.Services
             return customEvents;
         }
 
-        public async Task<CustomEvent> GetCustomEvent(string eventId)
+        public async Task<CustomEventDetails> GetCustomEvent(int eventId)
         {
             var cacheKey = $"customEventLog:{eventId}";
 
-            var cachedEvent = await _cache.GetAsync<CustomEvent>(cacheKey);
+            var cachedEvent = await _cache.GetAsync<CustomEventDetails>(cacheKey);
             if (cachedEvent != null)
                 return cachedEvent;
 
             var dbContext = _dbContextFactory();
 
-            var result = (from e in dbContext.CustomEvents
-                          where e.Id == eventId
-                          select new DbCustomEvent
-                          {
-                             Id = e.Id,
-                             Name = e.Name,
-                             Description = e.Description,
-                             GameId = e.GameId,
-                             IsPrivate = e.IsPrivate,
-                             StartDate = e.StartDate,
-                             EndDate = e.EndDate,
-                             ServerId = e.ServerId,
-                             MapId = e.MapId,
-                             Teams = (from t in dbContext.CustomEventTeams
-                                      where t.EventId == e.Id
-                                      select new DbCustomEventTeam
-                                      {
-                                          EventId = t.EventId,
-                                          TeamId = t.TeamId,
-                                          Name = t.Name
-                                      }).ToList()
-                          }).ToList().FirstOrDefault();
+            var result = await GetCustomEventParams(eventId);
 
             var reportTask = _daybreakGamesClient.GetCombatReport(result.ServerId, result.MapId, result.StartDate, result.EndDate);
             var territoryTask = _daybreakGamesClient.GetTerritoryScoreFromDate(result.ServerId, result.MapId, result.EndDate);
 
             await Task.WhenAll(reportTask, territoryTask);
 
-            var customEvent = new CustomEvent
+            var customEvent = new CustomEventDetails
             {
                 Id = result.Id,
                 Name = result.Name,
@@ -162,7 +181,7 @@ namespace Voidwell.Internal.Services
                 StartDate = customEvent.StartDate,
                 EndDate = customEvent.EndDate,
                 IsPrivate = customEvent.IsPrivate,
-                GameId = "ps2"
+                GameId = customEvent.GameId
             };
 
             var dbContext = _dbContextFactory();
@@ -184,16 +203,37 @@ namespace Voidwell.Internal.Services
 
             await dbContext.SaveChangesAsync();
 
-            return await GetCustomEvent(eventId);
+            customEvent.Id = eventId;
+
+            return customEvent;
         }
 
-        public async Task<CustomEvent> UpdateCustomEvent(string eventId, CustomEvent customEvent)
+        public async Task<CustomEvent> UpdateCustomEvent(int eventId, CustomEvent customEvent)
         {
             var dbContext = _dbContextFactory();
 
-            var dbEvent = await dbContext.CustomEvents
-                .Include(i => i.Teams)
-                .SingleOrDefaultAsync(e => e.Id == eventId);
+            var dbEvent = (from e in dbContext.CustomEvents
+                          where e.Id == eventId
+                          select new DbCustomEvent
+                          {
+                              Id = e.Id,
+                              Name = e.Name,
+                              Description = e.Description,
+                              GameId = e.GameId,
+                              IsPrivate = e.IsPrivate,
+                              StartDate = e.StartDate,
+                              EndDate = e.EndDate,
+                              ServerId = e.ServerId,
+                              MapId = e.MapId,
+                              Teams = (from t in dbContext.CustomEventTeams
+                                       where t.EventId == e.Id
+                                       select new DbCustomEventTeam
+                                       {
+                                           EventId = t.EventId,
+                                           TeamId = t.TeamId,
+                                           Name = t.Name
+                                       }).ToList()
+                          }).FirstOrDefault();
 
             if (dbEvent == null)
                 return null;
@@ -206,7 +246,11 @@ namespace Voidwell.Internal.Services
             dbEvent.EndDate = customEvent.EndDate;
             dbEvent.IsPrivate = customEvent.IsPrivate;
 
+            dbContext.Update(dbEvent);
+            await dbContext.SaveChangesAsync();
+
             dbContext.CustomEventTeams.RemoveRange(dbEvent.Teams);
+            await dbContext.SaveChangesAsync();
 
             var dbCustomEventTeamModels = customEvent.Teams.Select(t =>
             {
@@ -219,13 +263,12 @@ namespace Voidwell.Internal.Services
             });
 
             await dbContext.CustomEventTeams.AddRangeAsync(dbCustomEventTeamModels);
-
             await dbContext.SaveChangesAsync();
 
-            return await GetCustomEvent(eventId);
+            return customEvent;
         }
 
-        public async Task DeleteCustomEvent(string eventId)
+        public async Task DeleteCustomEvent(int eventId)
         {
             var dbContext = _dbContextFactory();
 
@@ -234,6 +277,50 @@ namespace Voidwell.Internal.Services
 
             dbContext.CustomEvents.Remove(dbEvent);
             await dbContext.SaveChangesAsync();
+        }
+
+        private async Task<CustomEvent> GetCustomEventParams(int eventId)
+        {
+            var dbContext = _dbContextFactory();
+
+            var result = (from e in dbContext.CustomEvents
+                           where e.Id == eventId
+                           select new DbCustomEvent
+                           {
+                               Id = e.Id,
+                               Name = e.Name,
+                               Description = e.Description,
+                               GameId = e.GameId,
+                               IsPrivate = e.IsPrivate,
+                               StartDate = e.StartDate,
+                               EndDate = e.EndDate,
+                               ServerId = e.ServerId,
+                               MapId = e.MapId,
+                               Teams = (from t in dbContext.CustomEventTeams
+                                        where t.EventId == e.Id
+                                        select new DbCustomEventTeam
+                                        {
+                                            EventId = t.EventId,
+                                            TeamId = t.TeamId,
+                                            Name = t.Name
+                                        }).AsNoTracking().ToList()
+                           }).AsNoTracking().FirstOrDefault();
+
+            var customEvent = new CustomEvent
+            {
+                Id = result.Id,
+                Name = result.Name,
+                Description = result.Description,
+                ServerId = result.ServerId,
+                MapId = result.MapId,
+                StartDate = result.StartDate,
+                EndDate = result.EndDate,
+                IsPrivate = result.IsPrivate,
+                GameId = result.GameId,
+                Teams = result.Teams?.Select(a => new CustomEventTeam { TeamId = a.TeamId, Name = a.Name })
+            };
+
+            return await Task.FromResult(customEvent);
         }
     }
 }

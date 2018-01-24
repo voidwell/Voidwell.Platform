@@ -25,7 +25,9 @@ namespace Voidwell.Internal
                 })
                 .ConfigureLogging(builder =>
                 {
-                    builder.AddFilter("Microsoft", LogLevel.Error);
+                    builder.SetMinimumLevel(LogLevel.Information);
+                    builder.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Error);
+                    builder.AddFilter("Microsoft.AspNetCore.Mvc", LogLevel.Error);
                     builder.AddDebug();
                 })
                 .Build();

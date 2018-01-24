@@ -10,7 +10,7 @@ namespace Voidwell.Internal.Data.Models
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public string Id { get; set; }
+        public int Id { get; set; }
         [Required]
         public string Name { get; set; }
         public string ServerId { get; set; }
@@ -21,7 +21,7 @@ namespace Voidwell.Internal.Data.Models
         public bool IsPrivate { get; set; }
         public string GameId { get; set; }
 
-        [ForeignKey("Id")]
+        [ForeignKey("EventId")]
         public IEnumerable<DbCustomEventTeam> Teams { get; set; }
     }
 }

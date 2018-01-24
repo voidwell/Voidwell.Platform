@@ -5,7 +5,7 @@ namespace Voidwell.Internal.Models
 {
     public class CustomEvent
     {
-        public string Id { get; set; }
+        public int Id { get; set; }
         public string Name { get; set; }
         public string ServerId { get; set; }
         public string MapId { get; set; }
@@ -15,8 +15,5 @@ namespace Voidwell.Internal.Models
         public bool IsPrivate { get; set; }
         public string GameId { get; set; }
         public IEnumerable<CustomEventTeam> Teams { get; set; }
-
-        public object Log { get; set; }
-        public object Score { get; set; }
     }
 }

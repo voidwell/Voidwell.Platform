@@ -7,7 +7,7 @@ namespace Voidwell.Internal.Data.Models
     public class DbCustomEventTeam
     {
         [Required]
-        public string EventId { get; set; }
+        public int EventId { get; set; }
         [Required]
         public string TeamId { get; set; }
         [Required]

@@ -25,7 +25,7 @@ namespace Voidwell.Internal.Data
             services.AddDbContext<VoidwellDbContext>(builder =>
                 builder.UseNpgsql(options.DBConnectionString, b => {
                     b.MigrationsAssembly(_migrationAssembly);
-                    b.EnableRetryOnFailure(3, TimeSpan.FromSeconds(2), null);
+                    //b.EnableRetryOnFailure(3, TimeSpan.FromSeconds(2), null);
                 }));
             services.AddTransient(sp => new Func<VoidwellDbContext>(() => sp.GetRequiredService<VoidwellDbContext>()));
 

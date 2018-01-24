@@ -16,7 +16,7 @@ namespace Voidwell.Internal.Controllers
         }
 
         [HttpGet("{eventId}")]
-        public async Task<ActionResult> GetCustomEventById(string eventId)
+        public async Task<ActionResult> GetCustomEventById(int eventId)
         {
             var result = await _customEventService.GetCustomEvent(eventId);
             return Ok(result);
@@ -49,7 +49,7 @@ namespace Voidwell.Internal.Controllers
         }
 
         [HttpPut("{eventId}")]
-        public async Task<ActionResult> PutCustomEvent(string eventId, [FromBody] CustomEvent customEvent)
+        public async Task<ActionResult> PutCustomEvent(int eventId, [FromBody] CustomEvent customEvent)
         {
             if (!ModelState.IsValid)
             {
@@ -61,7 +61,7 @@ namespace Voidwell.Internal.Controllers
         }
 
         [HttpDelete("{eventId}")]
-        public async Task<ActionResult> DeleteCustomEvent(string eventId)
+        public async Task<ActionResult> DeleteCustomEvent(int eventId)
         {
             await _customEventService.DeleteCustomEvent(eventId);
             return NoContent();

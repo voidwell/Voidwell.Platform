@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Voidwell.Internal.Models;
@@ -19,6 +20,14 @@ namespace Voidwell.Internal.Clients
         {
             var response = await _httpClient.GetAsync($"user/{userId}/name");
             return await response.GetContentAsync<DisplayName>();
+        }
+
+        public async Task<IEnumerable<DisplayName>> GetDisplayNames(IEnumerable<Guid> userIds)
+        {
+            var batchRequest = new BatchUserRequest(userIds);
+            var content = JsonContent.FromObject(batchRequest);
+            var response = await _httpClient.PostAsync("user/names", content);
+            return await response.GetContentAsync<IEnumerable<DisplayName>>();
         }
 
         public void Dispose()
