@@ -25,6 +25,7 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="2.0.1" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.Design" Version="1.1.1" />
     <PackageReference Include="StackExchange.Redis" Version="1.2.6" />
+    <PackageReference Include="IdentityServer4.AccessTokenValidation" Version="2.1.0" />
   </ItemGroup>
 
   <ItemGroup>

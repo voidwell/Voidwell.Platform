@@ -7,13 +7,9 @@ using Newtonsoft.Json.Serialization;
 using Voidwell.Internal.Data;
 using Voidwell.Internal.Clients;
 using Voidwell.Internal.Services;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Collections.Generic;
-using System.Linq;
 using Voidwell.Cache;
 using Microsoft.AspNetCore.Http;
+using IdentityServer4.AccessTokenValidation;
 
 namespace Voidwell.Internal
 {
@@ -40,25 +36,13 @@ namespace Voidwell.Internal
             services.AddCache("Voidwell.Internal");
             services.AddEntityFrameworkContext(Configuration);
 
-            services.AddAuthentication(o =>
-            {
-                o.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(o =>
-            {
-                o.Authority = "http://voidwellauth:5000";
-                o.Audience = "voidwell-internal";
-                o.RequireHttpsMetadata = false;
-                o.SaveToken = true;
-                o.TokenValidationParameters = new TokenValidationParameters
+            services.AddAuthentication(IdentityServerAuthenticationDefaults.AuthenticationScheme)
+                .AddIdentityServerAuthentication(options =>
                 {
-                    ValidateIssuer = false
-                };
-
-                var validator = o.SecurityTokenValidators.OfType<JwtSecurityTokenHandler>().SingleOrDefault();
-                validator.InboundClaimTypeMap = new Dictionary<string, string>();
-                validator.OutboundClaimTypeMap = new Dictionary<string, string>();
-            });
+                    options.Authority = "http://voidwellauth:5000";
+                    options.SupportedTokens = SupportedTokens.Jwt;
+                    options.RequireHttpsMetadata = false;
+                });
 
             services.AddSingleton<IDaybreakGamesClient, DaybreakGamesClient>();
             services.AddSingleton<IUserManagementClient, UserManagementClient>();
