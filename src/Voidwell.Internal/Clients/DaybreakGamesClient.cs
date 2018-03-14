@@ -26,6 +26,7 @@ namespace Voidwell.Internal.Clients
             };
             var content = JsonContent.FromObject(request);
             var response = await _httpClient.PostAsync("ps2/combatReport", content);
+            response.EnsureSuccessStatusCode();
             return await response.Content.ReadAsObjectAsync<object>();
         }
 
@@ -39,6 +40,7 @@ namespace Voidwell.Internal.Clients
             };
             var content = JsonContent.FromObject(request);
             var response = await _httpClient.PostAsync("ps2/map/territory", content);
+            response.EnsureSuccessStatusCode();
             return await response.Content.ReadAsObjectAsync<object>();
         }
 

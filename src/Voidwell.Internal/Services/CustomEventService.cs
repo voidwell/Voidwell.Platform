@@ -138,7 +138,9 @@ namespace Voidwell.Internal.Services
 
             var cachedEvent = await _cache.GetAsync<CustomEventDetails>(cacheKey);
             if (cachedEvent != null)
+            {
                 return cachedEvent;
+            }
 
             var dbContext = _dbContextFactory();
 
