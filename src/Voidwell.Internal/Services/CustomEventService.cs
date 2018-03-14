@@ -82,12 +82,14 @@ namespace Voidwell.Internal.Services
             var cachedEvents = await _cache.GetAsync<IEnumerable<CustomEvent>>($"customEventlist_{gameId}");
 
             if (cachedEvents != null)
+            {
                 return cachedEvents;
+            }
 
             var dbContext = _dbContextFactory();
 
             var results = (from e in dbContext.CustomEvents
-                           where e.GameId == gameId
+                           where e.GameId == gameId && e.IsPrivate == false
                            orderby e.StartDate descending
                            select new DbCustomEvent
                            {
