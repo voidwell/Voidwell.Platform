@@ -1,15 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Voidwell.Internal.Data.Models
 {
-    [Table("CustomEvent")]
-    public class DbCustomEvent
+    public class CustomEvent
     {
-        [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
         [Required]
         public string Name { get; set; }
@@ -20,8 +16,8 @@ namespace Voidwell.Internal.Data.Models
         public DateTime EndDate { get; set; }
         public bool IsPrivate { get; set; }
         public string GameId { get; set; }
+        public string ScoreConfiguration { get; set; }
 
-        [ForeignKey("EventId")]
-        public IEnumerable<DbCustomEventTeam> Teams { get; set; }
+        public IEnumerable<CustomEventTeam> Teams { get; set; }
     }
 }

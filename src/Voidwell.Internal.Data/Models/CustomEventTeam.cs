@@ -1,16 +1,16 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Voidwell.Internal.Data.Models
 {
-    [Table("CustomEventTeam")]
-    public class DbCustomEventTeam
+    public class CustomEventTeam
     {
         [Required]
-        public int EventId { get; set; }
+        public int CustomEventId { get; set; }
         [Required]
         public string TeamId { get; set; }
         [Required]
         public string Name { get; set; }
+
+        public CustomEvent CustomEvent { get; set; }
     }
 }

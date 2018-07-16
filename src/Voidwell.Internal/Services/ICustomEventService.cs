@@ -1,16 +1,17 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using Voidwell.Internal.Data.Models;
 using Voidwell.Internal.Models;
 
 namespace Voidwell.Internal.Services
 {
     public interface ICustomEventService
     {
-        Task<IEnumerable<CustomEvent>> GetAllCustomEvents();
-        Task<IEnumerable<CustomEvent>> GetAllCustomEvents(string gameId);
-        Task<CustomEventDetails> GetCustomEvent(int eventId);
-        Task<CustomEvent> CreateCustomEvent(CustomEvent customEvent);
-        Task<CustomEvent> UpdateCustomEvent(int eventId, CustomEvent customEvent);
-        Task DeleteCustomEvent(int eventId);
+        Task<IEnumerable<CustomEvent>> GetAllCustomEventsAsync();
+        Task<IEnumerable<CustomEvent>> GetAllCustomEventsByGameIdAsync(string gameId);
+        Task<CustomEventDetails> GetCustomEventAsync(int eventId);
+        Task<CustomEvent> CreateCustomEventAsync(CustomEvent customEvent);
+        Task<CustomEvent> UpdateCustomEventAsync(int eventId, CustomEvent customEvent);
+        Task DeleteCustomEventAsync(int eventId);
     }
 }

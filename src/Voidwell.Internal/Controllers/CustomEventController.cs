@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
-using Voidwell.Internal.Models;
+using Voidwell.Internal.Data.Models;
 using Voidwell.Internal.Services;
 
 namespace Voidwell.Internal.Controllers
@@ -18,21 +18,21 @@ namespace Voidwell.Internal.Controllers
         [HttpGet("{eventId}")]
         public async Task<ActionResult> GetCustomEventById(int eventId)
         {
-            var result = await _customEventService.GetCustomEvent(eventId);
+            var result = await _customEventService.GetCustomEventAsync(eventId);
             return Ok(result);
         }
 
         [HttpGet]
         public async Task<ActionResult> GetAllCustomEvents()
         {
-            var result = await _customEventService.GetAllCustomEvents();
+            var result = await _customEventService.GetAllCustomEventsAsync();
             return Ok(result);
         }
 
         [HttpGet("game/{gameId}")]
         public async Task<ActionResult> GetAllCustomEventsByGame(string gameId)
         {
-            var result = await _customEventService.GetAllCustomEvents(gameId);
+            var result = await _customEventService.GetAllCustomEventsByGameIdAsync(gameId);
             return Ok(result);
         }
 
@@ -44,7 +44,7 @@ namespace Voidwell.Internal.Controllers
                 return BadRequest(ModelState);
             }
 
-            var result = await _customEventService.CreateCustomEvent(customEvent);
+            var result = await _customEventService.CreateCustomEventAsync(customEvent);
             return Created("gameevent", result);
         }
 
@@ -56,14 +56,14 @@ namespace Voidwell.Internal.Controllers
                 return BadRequest(ModelState);
             }
 
-            var result = await _customEventService.UpdateCustomEvent(eventId, customEvent);
+            var result = await _customEventService.UpdateCustomEventAsync(eventId, customEvent);
             return Ok(result);
         }
 
         [HttpDelete("{eventId}")]
         public async Task<ActionResult> DeleteCustomEvent(int eventId)
         {
-            await _customEventService.DeleteCustomEvent(eventId);
+            await _customEventService.DeleteCustomEventAsync(eventId);
             return NoContent();
         }
     }

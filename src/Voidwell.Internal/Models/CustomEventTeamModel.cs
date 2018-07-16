@@ -1,6 +1,6 @@
 ﻿namespace Voidwell.Internal.Models
 {
-    public class CustomEventTeam
+    public class CustomEventTeamModel
     {
         public string TeamId { get; set; }
         public string Name { get; set; }

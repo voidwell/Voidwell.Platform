@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Voidwell.Internal.Models
 {
-    public class BlogPost
+    public class BlogPostModel
     {
         public string Id { get; set; }
         [Required]

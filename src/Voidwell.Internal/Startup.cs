@@ -15,9 +15,20 @@ namespace Voidwell.Internal
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        public Startup(IHostingEnvironment env)
         {
-            Configuration = configuration;
+            var builder = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", true)
+                .SetBasePath(env.ContentRootPath);
+
+            if (env.IsDevelopment())
+            {
+                builder.AddJsonFile("devsettings.json", true, true);
+            }
+
+            builder.AddEnvironmentVariables();
+
+            Configuration = builder.Build();
         }
 
         public IConfiguration Configuration { get; }
@@ -30,6 +41,8 @@ namespace Voidwell.Internal
                 {
                     options.NullValueHandling = NullValueHandling.Ignore;
                     options.ContractResolver = new CamelCasePropertyNamesContractResolver();
+                    options.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
+                    options.DateTimeZoneHandling = DateTimeZoneHandling.Utc;
                 });
 
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();

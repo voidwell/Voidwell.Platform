@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
-using Voidwell.Internal.Models;
+using Voidwell.Internal.Data.Models;
 using Voidwell.Internal.Services;
 
 namespace Voidwell.Internal.Controllers
@@ -20,14 +20,14 @@ namespace Voidwell.Internal.Controllers
         [HttpGet]
         public async Task<ActionResult> GetAllBlogPosts()
         {
-            var result = await _blogService.GetBlogPosts(10, 0);
+            var result = await _blogService.GetBlogPostsAsync(1, 10);
             return Ok(result);
         }
 
         [HttpGet("{postId}")]
         public async Task<ActionResult> GetBlogPost(string postId)
         {
-            var result = await _blogService.GetBlogPost(postId);
+            var result = await _blogService.GetBlogPostAsync(postId);
             return Ok(result);
         }
 
@@ -45,7 +45,7 @@ namespace Voidwell.Internal.Controllers
                 return BadRequest("Could not resolve user id");
             }
 
-            var result = await _blogService.CreateBlogPost(userId.Value, blogPost);
+            var result = await _blogService.CreateBlogPostAsync(userId.Value, blogPost);
             return Created("blog", result);
         }
 
@@ -57,14 +57,14 @@ namespace Voidwell.Internal.Controllers
                 return BadRequest(ModelState);
             }
 
-            var result = await _blogService.UpdateBlogPost(postId, blogPost);
+            var result = await _blogService.UpdateBlogPostAsync(postId, blogPost);
             return Ok(result);
         }
 
         [HttpDelete("{postId}")]
         public async Task<ActionResult> DeleteBlogPost(string postId)
         {
-            await _blogService.DeleteBlogPost(postId);
+            await _blogService.DeleteBlogPostAsync(postId);
             return NoContent();
         }
     }

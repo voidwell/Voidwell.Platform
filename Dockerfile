@@ -4,6 +4,7 @@ WORKDIR /app
 # Copy and restore as distinct layers
 COPY *.sln ./
 COPY ./src/Voidwell.Internal/*.csproj ./src/Voidwell.Internal/
+COPY ./src/Voidwell.Internal.Data/*.csproj ./src/Voidwell.Internal.Data/
 
 RUN dotnet restore
 

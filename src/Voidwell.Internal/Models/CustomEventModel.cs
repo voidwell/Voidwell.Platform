@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Voidwell.Internal.Models
 {
-    public class CustomEvent
+    public class CustomEventModel
     {
         public int Id { get; set; }
         public string Name { get; set; }
@@ -14,6 +14,7 @@ namespace Voidwell.Internal.Models
         public DateTime EndDate { get; set; }
         public bool IsPrivate { get; set; }
         public string GameId { get; set; }
-        public IEnumerable<CustomEventTeam> Teams { get; set; }
+        public string ScoreConfiguration { get; set; }
+        public IEnumerable<CustomEventTeamModel> Teams { get; set; }
     }
 }

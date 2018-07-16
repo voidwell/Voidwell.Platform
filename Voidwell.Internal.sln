@@ -9,12 +9,18 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{E07D5578-277
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E1267F52-358F-4DE7-9098-0C44BB71CBA6}"
 	ProjectSection(SolutionItems) = preProject
+		.dockerignore = .dockerignore
 		.gitattributes = .gitattributes
 		.gitignore = .gitignore
 		Directory.Build.props = Directory.Build.props
 		Dockerfile = Dockerfile
 		Dockerfile.debug = Dockerfile.debug
+		init-migrate.bat = init-migrate.bat
+		init-update.bat = init-update.bat
+		new-build.sh = new-build.sh
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Voidwell.Internal.Data", "src\Voidwell.Internal.Data\Voidwell.Internal.Data.csproj", "{548B6404-5AA7-4CD2-8A9E-41B02345144E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -26,12 +32,17 @@ Global
 		{70DEC05A-24A9-474B-A954-6504AE2CD74C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{70DEC05A-24A9-474B-A954-6504AE2CD74C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{70DEC05A-24A9-474B-A954-6504AE2CD74C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{548B6404-5AA7-4CD2-8A9E-41B02345144E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{548B6404-5AA7-4CD2-8A9E-41B02345144E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{548B6404-5AA7-4CD2-8A9E-41B02345144E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{548B6404-5AA7-4CD2-8A9E-41B02345144E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{70DEC05A-24A9-474B-A954-6504AE2CD74C} = {E07D5578-2777-4F00-B6F9-C2DEC74C1138}
+		{548B6404-5AA7-4CD2-8A9E-41B02345144E} = {E07D5578-2777-4F00-B6F9-C2DEC74C1138}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1011AD1D-2AC5-4BC2-A299-5778409158D2}
