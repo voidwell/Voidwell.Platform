@@ -1,7 +1,6 @@
-pushd %~dp0\src\Voidwell.Internal.Data
+pushd %~dp0\src\Voidwell.Platform.Data
 set ASPNETCORE_ENVIRONMENT=Development
-dotnet ef migrations add VoidwellDbContext.release.1 -v ^
-    -c Voidwell.Internal.Data.VoidwellDbContext ^
-    -o ./Migrations ^
-    --msbuildprojectextensionspath ./../../build/Voidwell.Internal.Data/Debug/obj
+dotnet ef migrations add %1 -v ^
+    -c Voidwell.Platform.Data.VoidwellDbContext ^
+    -o ./Migrations
 popd

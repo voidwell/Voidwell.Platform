@@ -287,4 +287,3 @@ __pycache__/
 *.odx.cs
 *.xsd.cs
 testsettings.json
-/src/Voidwell.Internal.Data/devsettings.json

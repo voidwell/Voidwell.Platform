@@ -1,26 +1,27 @@
-FROM microsoft/dotnet:2.0.0-sdk AS build-env
+# syntax=docker/dockerfile:1.7-labs
+
+# --- Build (restore + publish) ---
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /app
 
-# Copy and restore as distinct layers
-COPY *.sln ./
-COPY ./src/Voidwell.Internal/*.csproj ./src/Voidwell.Internal/
-COPY ./src/Voidwell.Internal.Data/*.csproj ./src/Voidwell.Internal.Data/
+COPY Directory.Build.props Directory.Packages.props ./
+COPY --parents ./src/**/*.csproj ./
 
-RUN dotnet restore
+RUN --mount=type=cache,target=/root/.nuget/packages \
+    dotnet restore --nologo ./src/Voidwell.Platform.Api/Voidwell.Platform.Api.csproj
 
-# Copy everything else and build
-COPY . ./
-RUN dotnet publish -c Release -o /app/out
+COPY . .
 
-# Build runtime image
-FROM microsoft/aspnetcore:2.0.0
+RUN --mount=type=cache,target=/root/.nuget/packages \
+    dotnet publish -c Release -o /app/publish ./src/Voidwell.Platform.Api/Voidwell.Platform.Api.csproj
 
-# Copy the app
+# --- Runtime ---
+FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
-COPY --from=build-env /app/out .
 
-ENV ASPNETCORE_URLS http://*:5000
+COPY --from=build /app/publish ./
+
+ENV ASPNETCORE_URLS=http://*:5000
 EXPOSE 5000
 
-# Start the app
-ENTRYPOINT dotnet Voidwell.Internal.dll
+ENTRYPOINT ["sh", "-c", "exec dotnet Voidwell.Platform.Api.dll"]
