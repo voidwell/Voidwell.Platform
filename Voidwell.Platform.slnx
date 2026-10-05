@@ -9,8 +9,8 @@
     <File Path="Dockerfile" />
     <File Path="Dockerfile.debug" />
     <File Path="global.json" />
-    <File Path="init-migrate.bat" />
-    <File Path="init-update.bat" />
+    <File Path="README.md" />
+    <File Path="scripts/init-migrate.sh" />
     <File Path="new-build.sh" />
     <File Path="test/Directory.Build.props" />
   </Folder>
