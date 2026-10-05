@@ -14,7 +14,7 @@ namespace Voidwell.Platform.Api.Test.Services;
 public class BlogPostServiceMissingPostTest
 {
     private readonly Mock<IBlogPostRepository> _repository = new();
-    private readonly Mock<IUserManagementClient> _userManagementClient = new();
+    private readonly Mock<IKeycloakClient> _keycloakClient = new();
     private readonly BlogPostService _subject;
 
     public BlogPostServiceMissingPostTest()
@@ -22,7 +22,7 @@ public class BlogPostServiceMissingPostTest
         var mapper = new MapperConfiguration(cfg => cfg.AddMaps(typeof(BlogPostMapper).Assembly), NullLoggerFactory.Instance)
             .CreateMapper();
 
-        _subject = new BlogPostService(_repository.Object, mapper, _userManagementClient.Object);
+        _subject = new BlogPostService(_repository.Object, mapper, _keycloakClient.Object);
     }
 
     [Fact]
@@ -31,7 +31,7 @@ public class BlogPostServiceMissingPostTest
         var result = await _subject.GetBlogPostByIdAsync(Guid.NewGuid());
 
         result.Should().BeNull();
-        _userManagementClient.Verify(a => a.GetDisplayNameAsync(It.IsAny<Guid>()), Times.Never);
+        _keycloakClient.Verify(a => a.GetDisplayNameAsync(It.IsAny<Guid>()), Times.Never);
     }
 
     [Fact]
@@ -54,7 +54,7 @@ public class BlogPostServiceMissingPostTest
     }
 
     [Fact]
-    public async Task GetBlogPostsByPageAsync_LeavesAuthorNameEmpty_WhenUserLookupReturnsNothing()
+    public async Task GetBlogPostsByPageAsync_LeavesAuthorNameEmpty_WhenUserIsNotFound()
     {
         var blogPost = new Data.Models.BlogPost
         {
@@ -66,7 +66,7 @@ public class BlogPostServiceMissingPostTest
             PublishDate = DateTimeOffset.UtcNow
         };
         _repository.Setup(a => a.GetBlogPostsAsync(0, 10)).ReturnsAsync([blogPost]);
-        _userManagementClient.Setup(a => a.GetDisplayNamesAsync(It.IsAny<IEnumerable<Guid>>())).ReturnsAsync((IEnumerable<DisplayName>)null);
+        _keycloakClient.Setup(a => a.GetDisplayNamesAsync(It.IsAny<IEnumerable<Guid>>())).ReturnsAsync([]);
 
         var result = (await _subject.GetBlogPostsByPageAsync(0)).ToList();
 

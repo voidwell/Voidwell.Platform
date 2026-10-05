@@ -23,6 +23,7 @@ public class ServiceRegistrationTest
 
         var services = new ServiceCollection();
         services.AddLogging();
+        services.AddSingleton<IConfiguration>(configuration);
         services.AddHttpContextAccessor();
         services.AddCache(options => options.KeyPrefix = "test");
         services.AddEntityFrameworkContext(configuration);

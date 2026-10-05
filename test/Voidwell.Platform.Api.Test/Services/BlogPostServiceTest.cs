@@ -15,18 +15,18 @@ namespace Voidwell.Platform.Api.Test.Services;
 public class BlogPostServiceTest
 {
     private IBlogPostRepository _mockBlogPostRepository;
-    private IUserManagementClient _mockUserManagementClient;
+    private IKeycloakClient _mockKeycloakClient;
 
     private IBlogPostService _subject;
 
     public BlogPostServiceTest()
     {
         _mockBlogPostRepository = Mock.Of<IBlogPostRepository>();
-        _mockUserManagementClient = Mock.Of<IUserManagementClient>();
+        _mockKeycloakClient = Mock.Of<IKeycloakClient>();
         var mapper = new MapperConfiguration(cfg => cfg.AddMaps(Assembly.GetAssembly(typeof(BlogPostMapper))), NullLoggerFactory.Instance)
             .CreateMapper();
 
-        _subject = new BlogPostService(_mockBlogPostRepository, mapper, _mockUserManagementClient);
+        _subject = new BlogPostService(_mockBlogPostRepository, mapper, _mockKeycloakClient);
     }
 
     [Fact]
@@ -50,7 +50,7 @@ public class BlogPostServiceTest
             .Setup(a => a.GetBlogPostsAsync(expectedPage, It.IsAny<int>()))
             .ReturnsAsync(storeBlogPosts)
             .Verifiable();
-        _mockUserManagementClient.AsMock()
+        _mockKeycloakClient.AsMock()
             .Setup(a => a.GetDisplayNamesAsync(new[] { testBlogPost1.Item2.AuthorId }))
             .ReturnsAsync(new[] { new Models.DisplayName { UserId = testBlogPost1.Item2.AuthorId, Name = testBlogPost1.Item1.AuthorName } })
             .Verifiable();
@@ -61,7 +61,7 @@ public class BlogPostServiceTest
             .BeEquivalentTo(expectedBlogPosts);
 
         _mockBlogPostRepository.AsMock().Verify();
-        _mockUserManagementClient.AsMock().Verify();
+        _mockKeycloakClient.AsMock().Verify();
     }
 
     [Fact]
@@ -77,7 +77,7 @@ public class BlogPostServiceTest
             .Setup(a => a.GetBlogPostAsync(expectedBlogPostId))
             .ReturnsAsync(storeBlogPost)
             .Verifiable();
-        _mockUserManagementClient.AsMock()
+        _mockKeycloakClient.AsMock()
             .Setup(a => a.GetDisplayNameAsync(testBlogPost.Item2.AuthorId))
             .ReturnsAsync(new Models.DisplayName { UserId = testBlogPost.Item2.AuthorId, Name = expectedBlogPost.AuthorName })
             .Verifiable();
@@ -88,7 +88,7 @@ public class BlogPostServiceTest
             .BeEquivalentTo(expectedBlogPost);
 
         _mockBlogPostRepository.AsMock().Verify();
-        _mockUserManagementClient.AsMock().Verify();
+        _mockKeycloakClient.AsMock().Verify();
     }
 
     [Fact]
@@ -113,7 +113,7 @@ public class BlogPostServiceTest
         _mockBlogPostRepository.AsMock()
             .Setup(a => a.GetBlogPostAsync(expectedBlogPostId))
             .ReturnsAsync(storeBlogPost);
-        _mockUserManagementClient.AsMock()
+        _mockKeycloakClient.AsMock()
             .Setup(a => a.GetDisplayNameAsync(createAuthorId))
             .ReturnsAsync(new Models.DisplayName { UserId = createAuthorId, Name = expectedBlogPost.AuthorName })
             .Verifiable();
@@ -125,7 +125,7 @@ public class BlogPostServiceTest
 
         _mockBlogPostRepository.AsMock().Verify(a => a.CreateBlogPostAsync(It.Is<Data.Models.BlogPost>(a => a.AuthorId == createAuthorId && a.PublishDate != default)), Times.Once);
         _mockBlogPostRepository.AsMock().Verify(a => a.GetBlogPostAsync(expectedBlogPostId), Times.Once);
-        _mockUserManagementClient.AsMock().Verify();
+        _mockKeycloakClient.AsMock().Verify();
     }
 
     [Fact]
@@ -155,7 +155,7 @@ public class BlogPostServiceTest
             .SetupSequence(a => a.GetBlogPostAsync(It.IsAny<Guid>()))
             .ReturnsAsync(storeBlogPost)
             .ReturnsAsync(updatedStoreBlogPost);
-        _mockUserManagementClient.AsMock()
+        _mockKeycloakClient.AsMock()
             .Setup(a => a.GetDisplayNameAsync(storeBlogPost.AuthorId))
             .ReturnsAsync(new Models.DisplayName { UserId = storeBlogPost.AuthorId, Name = expectedUpdatedBlogPost.AuthorName })
             .Verifiable();
@@ -167,7 +167,7 @@ public class BlogPostServiceTest
 
         _mockBlogPostRepository.AsMock().Verify(a => a.UpdateBlogPostAsync(It.Is<Data.Models.BlogPost>(x => x.Id == expectedBlogPostId && x.Title == blogPostRequest.Title)), Times.Once);
         _mockBlogPostRepository.AsMock().Verify(a => a.GetBlogPostAsync(expectedBlogPostId), Times.Exactly(2));
-        _mockUserManagementClient.AsMock().Verify();
+        _mockKeycloakClient.AsMock().Verify();
     }
 
     [Fact]

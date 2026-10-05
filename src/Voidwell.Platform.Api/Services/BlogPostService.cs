@@ -9,13 +9,13 @@ public class BlogPostService : IBlogPostService
 {
     private readonly IBlogPostRepository _blogPostRepository;
     private readonly IMapper _mapper;
-    private readonly IUserManagementClient _userManagementClient;
+    private readonly IKeycloakClient _keycloakClient;
 
-    public BlogPostService(IBlogPostRepository blogPostRepository, IMapper mapper, IUserManagementClient userManagementClient)
+    public BlogPostService(IBlogPostRepository blogPostRepository, IMapper mapper, IKeycloakClient keycloakClient)
     {
         _blogPostRepository = blogPostRepository;
         _mapper = mapper;
-        _userManagementClient = userManagementClient;
+        _keycloakClient = keycloakClient;
     }
 
     public async Task<IEnumerable<BlogPost>> GetBlogPostsByPageAsync(int page)
@@ -23,7 +23,7 @@ public class BlogPostService : IBlogPostService
         var storeBlogPosts = await _blogPostRepository.GetBlogPostsAsync(page, 10);
 
         var authorMap = storeBlogPosts.ToDictionary(a => a.Id, a => a.AuthorId);
-        var authorNames = await _userManagementClient.GetDisplayNamesAsync(authorMap.Values.Distinct()) ?? [];
+        var authorNames = await _keycloakClient.GetDisplayNamesAsync(authorMap.Values.Distinct());
 
         var blogPosts = _mapper.Map<IEnumerable<BlogPost>>(storeBlogPosts).ToList();
         blogPosts.ForEach(p => p.AuthorName = authorNames.FirstOrDefault(n => n.UserId == authorMap[p.Id])?.Name);
@@ -40,7 +40,7 @@ public class BlogPostService : IBlogPostService
         }
 
         var blogPost = _mapper.Map<BlogPost>(storeBlogPost);
-        blogPost.AuthorName = (await _userManagementClient.GetDisplayNameAsync(storeBlogPost.AuthorId))?.Name;
+        blogPost.AuthorName = (await _keycloakClient.GetDisplayNameAsync(storeBlogPost.AuthorId))?.Name;
 
         return blogPost;
     }

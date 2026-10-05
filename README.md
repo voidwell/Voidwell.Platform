@@ -14,7 +14,7 @@ Backend API for Voidwell's platform features: the blog and custom game events. I
 | PostgreSQL | any supported release | Primary data store (EF Core + Npgsql); migrations run automatically on startup |
 | Redis | optional | Shared cache (FusionCache L2 + backplane). If `RedisConfiguration` is empty, caching is in-memory per instance |
 | Voidwell auth server (`http://voidwellauth:5000`) | n/a | Validates incoming JWT / reference tokens |
-| Voidwell user management (`http://voidwellusermanagement:5000`) | n/a | Resolves blog author display names |
+| Keycloak (Admin REST API) | n/a | Resolves blog author display names. Needs a service-account client with the realm-management `view-users` role |
 | Voidwell.DaybreakGames (`http://voidwelldaybreakgames:5000`) | n/a | Combat report and territory data for custom events |
 | Docker | optional | Container build and deployment |
 
@@ -33,6 +33,10 @@ Settings are read from `appsettings.json`, then `appsettings.{Environment}.json`
 | `Auth:ClientId` | Yes | Client used for reference-token introspection (`voidwell-api` in `appsettings.json`) |
 | `Auth:ClientSecret` | Yes | Secret for that client |
 | `Auth:RoleClaimType` | No | Claim type that carries roles (`role` in `appsettings.json`) |
+| `Keycloak:BaseUrl` | Yes | Keycloak server address, e.g. `https://auth.voidwell.com` |
+| `Keycloak:Realm` | Yes | Realm that holds the users |
+| `Keycloak:ClientId` | Yes | Service-account client used for the Admin API |
+| `Keycloak:ClientSecret` | Yes | Secret for that client |
 | `RedisConfiguration` | No | StackExchange.Redis connection string. Empty keeps the cache in memory only. Keys are prefixed `Voidwell.Platform` |
 | `OriginAddress` | No | Extra allowed CORS origin (`http://localhost:4200` is always allowed) |
 | `ApplicationName` | No | Overrides the `Application` property on log events |
@@ -44,6 +48,9 @@ Example `appsettings.Development.json` (placed in `src/Voidwell.Platform.Api/`; 
 {
   "ConnectionString": "Server=localhost;Database=voidwell.platform;Username=postgres;Password=postgres",
   "Auth": {
+    "ClientSecret": "dev-secret"
+  },
+  "Keycloak": {
     "ClientSecret": "dev-secret"
   },
   "RedisConfiguration": "localhost:6379"
