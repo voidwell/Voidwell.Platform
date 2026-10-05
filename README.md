@@ -38,7 +38,7 @@ Settings are read from `appsettings.json`, then `appsettings.{Environment}.json`
 | `ApplicationName` | No | Overrides the `Application` property on log events |
 | `Serilog` | No | Standard Serilog configuration section (levels and overrides) in `appsettings.json` |
 
-Example `appsettings.Development.json` (placed in `src/Voidwell.Platform.Api/`; keep real secrets out of commits):
+Example `appsettings.Development.json` (placed in `src/Voidwell.Platform.Api/`; it is gitignored, so keep real secrets there):
 
 ```json
 {
