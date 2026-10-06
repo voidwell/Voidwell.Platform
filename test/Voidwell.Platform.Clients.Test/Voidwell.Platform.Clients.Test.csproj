@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Voidwell.Platform.Clients\Voidwell.Platform.Clients.csproj" />
+  </ItemGroup>
+
+</Project>

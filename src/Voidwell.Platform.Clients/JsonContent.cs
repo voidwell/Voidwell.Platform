@@ -1,7 +1,7 @@
 using System.Text;
 using System.Text.Json;
 
-namespace Voidwell.Platform.Api.Clients;
+namespace Voidwell.Platform.Clients;
 
 public class JsonContent : StringContent
 {

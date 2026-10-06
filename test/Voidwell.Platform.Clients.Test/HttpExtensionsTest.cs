@@ -2,10 +2,9 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using FluentAssertions;
-using Voidwell.Platform.Api.Clients;
 using Xunit;
 
-namespace Voidwell.Platform.Api.Test.Clients;
+namespace Voidwell.Platform.Clients.Test;
 
 public class HttpExtensionsTest
 {

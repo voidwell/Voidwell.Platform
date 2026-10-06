@@ -88,12 +88,12 @@ public class PostControllerTest
     [Fact]
     public async Task GetEditablePost_ReturnsEditablePost()
     {
-        var request = new BlogPostRequest { Id = Guid.NewGuid() };
-        _blogPostService.Setup(a => a.GetEditableBlogPostByIdAsync(request.Id)).ReturnsAsync(request);
+        var editable = new EditableBlogPost { Id = Guid.NewGuid() };
+        _blogPostService.Setup(a => a.GetEditableBlogPostByIdAsync(editable.Id)).ReturnsAsync(editable);
 
-        var result = await _subject.GetEditablePost(request.Id);
+        var result = await _subject.GetEditablePost(editable.Id);
 
-        result.Should().BeOfType<OkObjectResult>().Which.Value.Should().BeSameAs(request);
+        result.Should().BeOfType<OkObjectResult>().Which.Value.Should().BeSameAs(editable);
     }
 
     [Fact]
@@ -105,16 +105,15 @@ public class PostControllerTest
     }
 
     [Fact]
-    public async Task UpdatePost_AppliesRouteIdToRequest()
+    public async Task UpdatePost_UpdatesThePostFromTheRoute()
     {
         var postId = Guid.NewGuid();
-        var request = new BlogPostRequest { Id = Guid.NewGuid(), Title = "Title", MarkdownContent = "Content" };
+        var request = new BlogPostRequest { Title = "Title", MarkdownContent = "Content" };
         var post = new BlogPost { Id = postId };
-        _blogPostService.Setup(a => a.UpdateBlogPostAsync(It.Is<BlogPostRequest>(r => r.Id == postId))).ReturnsAsync(post);
+        _blogPostService.Setup(a => a.UpdateBlogPostAsync(postId, request)).ReturnsAsync(post);
 
         var result = await _subject.UpdatePost(postId, request);
 
-        request.Id.Should().Be(postId);
         result.Should().BeOfType<OkObjectResult>().Which.Value.Should().BeSameAs(post);
     }
 

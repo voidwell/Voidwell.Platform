@@ -1,6 +1,7 @@
-using Voidwell.Platform.Api.Models;
+using Voidwell.Platform.Clients.DaybreakGames.Models;
 
-namespace Voidwell.Platform.Api.Clients;
+
+namespace Voidwell.Platform.Clients.DaybreakGames;
 
 public class DaybreakGamesClient : IDaybreakGamesClient
 {

@@ -1,7 +1,7 @@
 using System.Net;
 using System.Text;
 
-namespace Voidwell.Platform.Api.Test.Clients;
+namespace Voidwell.Platform.Clients.Test;
 
 internal sealed class StubHttpMessageHandler : HttpMessageHandler
 {

@@ -1,6 +1,6 @@
 using AutoMapper;
-using Voidwell.Platform.Api.Clients;
 using Voidwell.Platform.Api.Models;
+using Voidwell.Platform.Clients.Keycloak;
 using Voidwell.Platform.Data.Repositories;
 
 namespace Voidwell.Platform.Api.Services;
@@ -58,11 +58,11 @@ public class BlogPostService : IBlogPostService
             ?? throw new InvalidOperationException($"Blog post {blogPostId} was not found after it was created.");
     }
 
-    public async Task<BlogPost?> UpdateBlogPostAsync(BlogPostRequest blogPostRequest)
+    public async Task<BlogPost?> UpdateBlogPostAsync(Guid blogPostId, BlogPostRequest blogPostRequest)
     {
         var mappedBlogPost = _mapper.Map<Data.Models.BlogPost>(blogPostRequest);
 
-        var storeBlogPost = await _blogPostRepository.GetBlogPostAsync(blogPostRequest.Id);
+        var storeBlogPost = await _blogPostRepository.GetBlogPostAsync(blogPostId);
         if (storeBlogPost == null)
         {
             return null;
@@ -75,7 +75,7 @@ public class BlogPostService : IBlogPostService
 
         await _blogPostRepository.UpdateBlogPostAsync(storeBlogPost);
 
-        return await GetBlogPostByIdAsync(blogPostRequest.Id);
+        return await GetBlogPostByIdAsync(blogPostId);
     }
 
     public Task DeleteBlogPostAsync(Guid blogPostId)
@@ -83,7 +83,7 @@ public class BlogPostService : IBlogPostService
         return _blogPostRepository.DeleteBlogPostAsync(blogPostId);
     }
 
-    public async Task<BlogPostRequest?> GetEditableBlogPostByIdAsync(Guid blogPostId)
+    public async Task<EditableBlogPost?> GetEditableBlogPostByIdAsync(Guid blogPostId)
     {
         var storeBlogPost = await _blogPostRepository.GetBlogPostAsync(blogPostId);
         if (storeBlogPost == null)
@@ -91,6 +91,6 @@ public class BlogPostService : IBlogPostService
             return null;
         }
 
-        return _mapper.Map<BlogPostRequest>(storeBlogPost);
+        return _mapper.Map<EditableBlogPost>(storeBlogPost);
     }
 }

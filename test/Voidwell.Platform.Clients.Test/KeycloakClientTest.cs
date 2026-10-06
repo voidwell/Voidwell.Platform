@@ -1,17 +1,14 @@
 using System.Net;
 using System.Text;
 using FluentAssertions;
-using Voidwell.Platform.Api.Clients;
-using Voidwell.Platform.Api.Options;
+using Voidwell.Platform.Clients.Keycloak;
 using Xunit;
-using ZiggyCreatures.Caching.Fusion;
 
-namespace Voidwell.Platform.Api.Test.Clients;
+namespace Voidwell.Platform.Clients.Test;
 
 public sealed class KeycloakClientTest : IDisposable
 {
-    private readonly FusionCache _cache = new(new FusionCacheOptions());
-    private readonly List<(HttpMethod Method, string Url, string Authorization, string Body)> _requests = [];
+    private readonly List<(HttpMethod Method, string Url)> _requests = [];
     private readonly Dictionary<string, (HttpStatusCode Status, string Body)> _responses = [];
     private readonly RoutingHandler _handler;
     private readonly HttpClient _httpClient;
@@ -19,17 +16,12 @@ public sealed class KeycloakClientTest : IDisposable
 
     public KeycloakClientTest()
     {
-        _responses["POST http://keycloak.test/realms/voidwell/protocol/openid-connect/token"] =
-            (HttpStatusCode.OK, """{"access_token":"admin-token","expires_in":300}""");
-
         _handler = new RoutingHandler(this);
-        _httpClient = new HttpClient(_handler);
-        _subject = new KeycloakClient(_httpClient, _cache, Microsoft.Extensions.Options.Options.Create(new KeycloakOptions
+        _httpClient = new HttpClient(_handler) { BaseAddress = new Uri("http://keycloak.test/") };
+        _subject = new KeycloakClient(_httpClient, Microsoft.Extensions.Options.Options.Create(new KeycloakOptions
         {
             BaseUrl = "http://keycloak.test/",
-            Realm = "voidwell",
-            ClientId = "platform",
-            ClientSecret = "secret"
+            Realm = "voidwell"
         }));
     }
 
@@ -37,7 +29,6 @@ public sealed class KeycloakClientTest : IDisposable
     {
         _httpClient.Dispose();
         _handler.Dispose();
-        _cache.Dispose();
     }
 
     [Fact]
@@ -50,37 +41,9 @@ public sealed class KeycloakClientTest : IDisposable
 
         result.UserId.Should().Be(userId);
         result.Name.Should().Be("someone");
-        var request = _requests.Single(r => r.Url.Contains("/users/"));
+        var request = _requests.Single();
         request.Method.Should().Be(HttpMethod.Get);
-        request.Authorization.Should().Be("Bearer admin-token");
-    }
-
-    [Fact]
-    public async Task GetDisplayNameAsync_RequestsTokenWithClientCredentials()
-    {
-        var userId = Guid.NewGuid();
-        AddUser(userId, "someone");
-
-        await _subject.GetDisplayNameAsync(userId);
-
-        var tokenRequest = _requests.Single(r => r.Url.EndsWith("/openid-connect/token", StringComparison.Ordinal));
-        tokenRequest.Body.Should().Contain("grant_type=client_credentials")
-            .And.Contain("client_id=platform")
-            .And.Contain("client_secret=secret");
-    }
-
-    [Fact]
-    public async Task GetDisplayNameAsync_ReusesTheCachedToken()
-    {
-        var first = Guid.NewGuid();
-        var second = Guid.NewGuid();
-        AddUser(first, "one");
-        AddUser(second, "two");
-
-        await _subject.GetDisplayNameAsync(first);
-        await _subject.GetDisplayNameAsync(second);
-
-        _requests.Count(r => r.Url.EndsWith("/openid-connect/token", StringComparison.Ordinal)).Should().Be(1);
+        request.Url.Should().Be($"http://keycloak.test/admin/realms/voidwell/users/{userId}");
     }
 
     [Fact]
@@ -121,16 +84,6 @@ public sealed class KeycloakClientTest : IDisposable
         _requests.Count(r => r.Url.EndsWith(found.ToString(), StringComparison.Ordinal)).Should().Be(1);
     }
 
-    [Fact]
-    public async Task GetDisplayNameAsync_Throws_WhenKeycloakIsNotConfigured()
-    {
-        var subject = new KeycloakClient(_httpClient, _cache, Microsoft.Extensions.Options.Options.Create(new KeycloakOptions()));
-
-        var act = () => subject.GetDisplayNameAsync(Guid.NewGuid());
-
-        await act.Should().ThrowAsync<InvalidOperationException>();
-    }
-
     private void AddUser(Guid userId, string username)
     {
         _responses[$"GET http://keycloak.test/admin/realms/voidwell/users/{userId}"] =
@@ -146,24 +99,23 @@ public sealed class KeycloakClientTest : IDisposable
             _test = test;
         }
 
-        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             var url = request.RequestUri.ToString();
-            var body = request.Content == null ? null : await request.Content.ReadAsStringAsync(cancellationToken);
             lock (_test._requests)
             {
-                _test._requests.Add((request.Method, url, request.Headers.Authorization?.ToString(), body));
+                _test._requests.Add((request.Method, url));
             }
 
             if (!_test._responses.TryGetValue($"{request.Method} {url}", out var response))
             {
-                return new HttpResponseMessage(HttpStatusCode.NotFound);
+                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound));
             }
 
-            return new HttpResponseMessage(response.Status)
+            return Task.FromResult(new HttpResponseMessage(response.Status)
             {
                 Content = new StringContent(response.Body, Encoding.UTF8, "application/json")
-            };
+            });
         }
     }
 }

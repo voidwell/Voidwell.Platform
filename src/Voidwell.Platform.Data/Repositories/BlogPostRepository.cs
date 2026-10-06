@@ -19,8 +19,10 @@ public class BlogPostRepository : IBlogPostRepository
         return await context.BlogPosts
             .Include(a => a.BlogPostTagMaps!)
                 .ThenInclude(a => a.BlogPostTag)
-            .Take(page * limit)
-            .Skip(limit)
+            .OrderByDescending(a => a.PublishDate)
+            .ThenBy(a => a.Id)
+            .Skip(page * limit)
+            .Take(limit)
             .ToListAsync();
     }
 

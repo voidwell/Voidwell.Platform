@@ -3,7 +3,7 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Voidwell.Platform.Api.Json;
+using Voidwell.Platform.Api.Extensions;
 using Xunit;
 
 namespace Voidwell.Platform.Api.Test;

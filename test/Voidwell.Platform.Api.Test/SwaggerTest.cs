@@ -3,6 +3,7 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Moq;
@@ -18,6 +19,10 @@ public class SwaggerTest
     [Fact]
     public async Task SwaggerDocument_MarksOnlyAuthorizedOperationsWithSecurity()
     {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string> { ["ApplicationName"] = "Voidwell.Platform" })
+            .Build();
+
         using var host = new HostBuilder()
             .ConfigureWebHost(webHost => webHost
                 .UseTestServer()
@@ -27,7 +32,7 @@ public class SwaggerTest
                     services.AddControllers().AddApplicationPart(typeof(PostController).Assembly);
                     services.AddAuthentication();
                     services.AddAuthorization();
-                    services.AddApiSwagger();
+                    services.AddApiSwagger(configuration);
                     services.AddSingleton(Mock.Of<IBlogPostService>());
                     services.AddSingleton(Mock.Of<ICustomEventService>());
                     services.AddSingleton(Mock.Of<IUserHelper>());

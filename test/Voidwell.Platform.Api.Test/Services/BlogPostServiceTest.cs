@@ -4,9 +4,10 @@ using FluentAssertions;
 using Markdig;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
-using Voidwell.Platform.Api.Clients;
 using Voidwell.Platform.Api.Services;
 using Voidwell.Platform.Api.Services.Mappers;
+using Voidwell.Platform.Clients.Keycloak;
+using Voidwell.Platform.Clients.Keycloak.Models;
 using Voidwell.Platform.Data.Repositories;
 using Xunit;
 
@@ -52,7 +53,7 @@ public class BlogPostServiceTest
             .Verifiable();
         _mockKeycloakClient.AsMock()
             .Setup(a => a.GetDisplayNamesAsync(new[] { testBlogPost1.Item2.AuthorId }))
-            .ReturnsAsync(new[] { new Models.DisplayName { UserId = testBlogPost1.Item2.AuthorId, Name = testBlogPost1.Item1.AuthorName } })
+            .ReturnsAsync(new[] { new DisplayName { UserId = testBlogPost1.Item2.AuthorId, Name = testBlogPost1.Item1.AuthorName } })
             .Verifiable();
 
         var result = await _subject.GetBlogPostsByPageAsync(expectedPage);
@@ -79,7 +80,7 @@ public class BlogPostServiceTest
             .Verifiable();
         _mockKeycloakClient.AsMock()
             .Setup(a => a.GetDisplayNameAsync(testBlogPost.Item2.AuthorId))
-            .ReturnsAsync(new Models.DisplayName { UserId = testBlogPost.Item2.AuthorId, Name = expectedBlogPost.AuthorName })
+            .ReturnsAsync(new DisplayName { UserId = testBlogPost.Item2.AuthorId, Name = expectedBlogPost.AuthorName })
             .Verifiable();
 
         var result = await _subject.GetBlogPostByIdAsync(expectedBlogPostId);
@@ -115,7 +116,7 @@ public class BlogPostServiceTest
             .ReturnsAsync(storeBlogPost);
         _mockKeycloakClient.AsMock()
             .Setup(a => a.GetDisplayNameAsync(createAuthorId))
-            .ReturnsAsync(new Models.DisplayName { UserId = createAuthorId, Name = expectedBlogPost.AuthorName })
+            .ReturnsAsync(new DisplayName { UserId = createAuthorId, Name = expectedBlogPost.AuthorName })
             .Verifiable();
 
         var result = await _subject.CreateBlogPostAsync(createAuthorId, blogPostRequest);
@@ -140,7 +141,6 @@ public class BlogPostServiceTest
 
         var blogPostRequest = new Models.BlogPostRequest
         {
-            Id = expectedBlogPostId,
             MarkdownContent = storeBlogPost.MarkdownContent,
             Title = "Updated Title",
             Tags = storeTestBlogPost.Item1.Tags
@@ -157,10 +157,10 @@ public class BlogPostServiceTest
             .ReturnsAsync(updatedStoreBlogPost);
         _mockKeycloakClient.AsMock()
             .Setup(a => a.GetDisplayNameAsync(storeBlogPost.AuthorId))
-            .ReturnsAsync(new Models.DisplayName { UserId = storeBlogPost.AuthorId, Name = expectedUpdatedBlogPost.AuthorName })
+            .ReturnsAsync(new DisplayName { UserId = storeBlogPost.AuthorId, Name = expectedUpdatedBlogPost.AuthorName })
             .Verifiable();
 
-        var result = await _subject.UpdateBlogPostAsync(blogPostRequest);
+        var result = await _subject.UpdateBlogPostAsync(expectedBlogPostId, blogPostRequest);
 
         result.Should()
             .BeEquivalentTo(expectedUpdatedBlogPost);
@@ -190,7 +190,7 @@ public class BlogPostServiceTest
         var expectedBlogPostId = Guid.NewGuid();
         var testBlogPost = GenerateTestBlogPost(expectedBlogPostId);
         var storeBlogPost = testBlogPost.Item2;
-        var expectedBlogPostRequest = new Models.BlogPostRequest
+        var expectedEditableBlogPost = new Models.EditableBlogPost
         {
             Id = storeBlogPost.Id,
             MarkdownContent = storeBlogPost.MarkdownContent,
@@ -205,7 +205,7 @@ public class BlogPostServiceTest
         var result = await _subject.GetEditableBlogPostByIdAsync(expectedBlogPostId);
 
         result.Should()
-            .BeEquivalentTo(expectedBlogPostRequest);
+            .BeEquivalentTo(expectedEditableBlogPost);
 
         _mockBlogPostRepository.AsMock().Verify(a => a.GetBlogPostAsync(expectedBlogPostId), Times.Once);
     }

@@ -18,6 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Voidwell.Platform.Clients\Voidwell.Platform.Clients.csproj" />
     <ProjectReference Include="..\Voidwell.Platform.Data\Voidwell.Platform.Data.csproj" />
   </ItemGroup>
 

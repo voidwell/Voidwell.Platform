@@ -2,10 +2,10 @@ using AutoMapper;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
-using Voidwell.Platform.Api.Clients;
 using Voidwell.Platform.Api.Models;
 using Voidwell.Platform.Api.Services;
 using Voidwell.Platform.Api.Services.Mappers;
+using Voidwell.Platform.Clients.Keycloak;
 using Voidwell.Platform.Data.Repositories;
 using Xunit;
 
@@ -45,9 +45,9 @@ public class BlogPostServiceMissingPostTest
     [Fact]
     public async Task UpdateBlogPostAsync_ReturnsNull_WhenPostDoesNotExist()
     {
-        var request = new BlogPostRequest { Id = Guid.NewGuid(), Title = "Title", MarkdownContent = "Content" };
+        var request = new BlogPostRequest { Title = "Title", MarkdownContent = "Content" };
 
-        var result = await _subject.UpdateBlogPostAsync(request);
+        var result = await _subject.UpdateBlogPostAsync(Guid.NewGuid(), request);
 
         result.Should().BeNull();
         _repository.Verify(a => a.UpdateBlogPostAsync(It.IsAny<Data.Models.BlogPost>()), Times.Never);

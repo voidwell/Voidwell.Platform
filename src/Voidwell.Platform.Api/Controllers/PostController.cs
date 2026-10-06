@@ -77,9 +77,7 @@ public class PostController : ControllerBase
     [Authorize(Roles = AuthConstants.Roles.Administrator)]
     public async Task<ActionResult> UpdatePost(Guid blogPostId, [FromBody] BlogPostRequest blogPostRequest)
     {
-        blogPostRequest.Id = blogPostId;
-
-        var blogPost = await _blogPostService.UpdateBlogPostAsync(blogPostRequest);
+        var blogPost = await _blogPostService.UpdateBlogPostAsync(blogPostId, blogPostRequest);
         if (blogPost == null)
         {
             return NotFound();

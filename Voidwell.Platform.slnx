@@ -16,10 +16,12 @@
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/Voidwell.Platform.Api/Voidwell.Platform.Api.csproj" />
+    <Project Path="src/Voidwell.Platform.Clients/Voidwell.Platform.Clients.csproj" />
     <Project Path="src/Voidwell.Platform.Data/Voidwell.Platform.Data.csproj" />
   </Folder>
   <Folder Name="/test/">
     <Project Path="test/Voidwell.Platform.Data.Test/Voidwell.Platform.Data.Test.csproj" />
+    <Project Path="test/Voidwell.Platform.Clients.Test/Voidwell.Platform.Clients.Test.csproj" />
     <Project Path="test/Voidwell.Platform.Api.Test/Voidwell.Platform.Api.Test.csproj" />
   </Folder>
 </Solution>

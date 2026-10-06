@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace Voidwell.Platform.Api.Clients;
+namespace Voidwell.Platform.Clients;
 
 public static class HttpContentExtensions
 {

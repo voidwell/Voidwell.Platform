@@ -1,9 +1,9 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Voidwell.Platform.Api.Json;
+namespace Voidwell.Platform.Api.Extensions;
 
-public static class MvcBuilderExtensions
+internal static class MvcBuilderExtensions
 {
     public static IMvcBuilder AddApiJsonOptions(this IMvcBuilder builder)
     {
@@ -17,7 +17,7 @@ public static class MvcBuilderExtensions
     }
 }
 
-public class UtcDateTimeJsonConverter : JsonConverter<DateTime>
+internal sealed class UtcDateTimeJsonConverter : JsonConverter<DateTime>
 {
     public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {

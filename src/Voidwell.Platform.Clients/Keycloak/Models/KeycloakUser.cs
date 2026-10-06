@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Voidwell.Platform.Api.Models;
+namespace Voidwell.Platform.Clients.Keycloak.Models;
 
 public class KeycloakUser
 {

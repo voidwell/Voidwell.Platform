@@ -3,17 +3,14 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Voidwell.Platform.Api;
 using Voidwell.Platform.Api.Authentication;
 using Voidwell.Platform.Api.Cache;
-using Voidwell.Platform.Api.Json;
-using Voidwell.Platform.Api.Logging;
+using Voidwell.Platform.Api.Extensions;
 using Voidwell.Platform.Api.Options;
 using Voidwell.Platform.Api.Swagger;
 using Voidwell.Platform.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.WebHost.UseUrls("http://0.0.0.0:5000");
-
-builder.Logging.AddLogging(builder.Environment, builder.Configuration);
+builder.AddApplicationLogging();
 
 var configuration = builder.Configuration;
 var services = builder.Services;
@@ -21,13 +18,13 @@ var services = builder.Services;
 services.AddControllers()
     .AddApiJsonOptions();
 
-services.AddApiSwagger();
+services.AddApiSwagger(configuration);
 
 services.AddHttpContextAccessor();
 services.AddCache(options =>
 {
     options.RedisConfiguration = configuration.GetValue<string>("RedisConfiguration");
-    options.KeyPrefix = "Voidwell.Platform";
+    options.KeyPrefix = configuration.GetApplicationName();
 });
 services.AddEntityFrameworkContext(configuration);
 

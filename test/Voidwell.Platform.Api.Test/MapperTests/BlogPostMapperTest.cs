@@ -98,7 +98,6 @@ public class BlogPostMapperTest
     [Fact]
     public void Map_Model_BlogPostRequest_to_DataModel_BlogPost()
     {
-        var expectedId = Guid.NewGuid();
         var expectedTitle = "TestTitle";
         var expectedMarkdownContent = "*Test*";
         var expectedTag1Id = Guid.NewGuid();
@@ -108,7 +107,6 @@ public class BlogPostMapperTest
 
         var model = new Models.BlogPostRequest
         {
-            Id = expectedId,
             Title = expectedTitle,
             MarkdownContent = expectedMarkdownContent,
             Tags = new[]
@@ -128,7 +126,6 @@ public class BlogPostMapperTest
 
         var expectedDataModel = new Data.Models.BlogPost
         {
-            Id = expectedId,
             Title = expectedTitle,
             MarkdownContent = expectedMarkdownContent,
             HtmlContent = "<p><em>Test</em></p>\n",
@@ -164,7 +161,7 @@ public class BlogPostMapperTest
     }
 
     [Fact]
-    public void Map_DataModel_BlogPost_to_Model_BlogPostRequest()
+    public void Map_DataModel_BlogPost_to_Model_EditableBlogPost()
     {
         var expectedId = Guid.NewGuid();
         var expectedTitle = "TestTitle";
@@ -207,7 +204,7 @@ public class BlogPostMapperTest
             }
         };
 
-        var expectedModel = new Models.BlogPostRequest
+        var expectedModel = new Models.EditableBlogPost
         {
             Id = expectedId,
             Title = expectedTitle,
@@ -227,7 +224,7 @@ public class BlogPostMapperTest
             }
         };
 
-        var result = _mapper.Map<Models.BlogPostRequest>(dataModel);
+        var result = _mapper.Map<Models.EditableBlogPost>(dataModel);
 
         result.Should()
             .BeEquivalentTo(expectedModel);

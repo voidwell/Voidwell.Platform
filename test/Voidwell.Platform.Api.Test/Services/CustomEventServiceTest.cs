@@ -1,8 +1,8 @@
 using FluentAssertions;
 using Moq;
-using Voidwell.Platform.Api.Clients;
 using Voidwell.Platform.Api.Models;
 using Voidwell.Platform.Api.Services;
+using Voidwell.Platform.Clients.DaybreakGames;
 using Voidwell.Platform.Data.Models;
 using Voidwell.Platform.Data.Repositories;
 using Xunit;

@@ -17,7 +17,15 @@ public class ServiceRegistrationTest
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string>
             {
-                ["ConnectionString"] = "Host=localhost;Database=test;Username=test;Password=test"
+                ["ConnectionString"] = "Host=localhost;Database=test;Username=test;Password=test",
+                ["DaybreakGames:ClientId"] = "daybreak",
+                ["DaybreakGames:ClientSecret"] = "secret",
+                ["DaybreakGames:TokenServiceAddress"] = "http://auth.test/token",
+                ["Keycloak:BaseUrl"] = "http://keycloak.test",
+                ["Keycloak:Realm"] = "voidwell",
+                ["Keycloak:ClientId"] = "platform",
+                ["Keycloak:ClientSecret"] = "secret",
+                ["Keycloak:TokenServiceAddress"] = "http://keycloak.test/token"
             })
             .Build();
 

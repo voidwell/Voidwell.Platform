@@ -1,6 +1,7 @@
-using Voidwell.Platform.Api.Models;
 
-namespace Voidwell.Platform.Api.Clients;
+using Voidwell.Platform.Clients.Keycloak.Models;
+
+namespace Voidwell.Platform.Clients.Keycloak;
 
 public interface IKeycloakClient
 {

@@ -1,14 +1,16 @@
 using Serilog;
 using Serilog.Formatting.Compact;
 
-namespace Voidwell.Platform.Api.Logging;
+namespace Voidwell.Platform.Api.Extensions;
 
 internal static class LoggingBuilderExtensions
 {
-    public static ILoggingBuilder AddLogging(this ILoggingBuilder builder, IHostEnvironment hostEnvironment, IConfiguration configuration)
+    public static IHostApplicationBuilder AddApplicationLogging(this IHostApplicationBuilder builder)
     {
-        var applicationName = configuration.GetValue<string>("ApplicationName") ?? hostEnvironment.ApplicationName;
+        var configuration = builder.Configuration;
+        var hostEnvironment = builder.Environment;
 
+        var applicationName = configuration.GetApplicationName();
         var loggerConfig = new LoggerConfiguration()
             .ReadFrom.Configuration(configuration)
             .Enrich.FromLogContext()
@@ -23,8 +25,8 @@ internal static class LoggingBuilderExtensions
             loggerConfig.WriteTo.Console(new CompactJsonFormatter());
         }
 
-        builder.ClearProviders();
-        builder.AddSerilog(loggerConfig.CreateLogger());
+        builder.Logging.ClearProviders();
+        builder.Logging.AddSerilog(loggerConfig.CreateLogger());
 
         return builder;
     }

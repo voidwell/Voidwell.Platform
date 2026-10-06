@@ -90,6 +90,27 @@ public class BlogPostRepositoryTest
         (await _subject.GetBlogPostAsync(id)).Should().BeNull();
     }
 
+    [Theory]
+    [InlineData(0, new[] { "post-5", "post-4" })]
+    [InlineData(1, new[] { "post-3", "post-2" })]
+    [InlineData(2, new[] { "post-1" })]
+    [InlineData(3, new string[0])]
+    public async Task GetBlogPostsAsync_ReturnsTheRequestedPage_NewestFirst(int page, string[] expectedTitles)
+    {
+        var start = DateTimeOffset.UtcNow;
+        for (var i = 1; i <= 5; i++)
+        {
+            var post = CreatePost();
+            post.Title = $"post-{i}";
+            post.PublishDate = start.AddMinutes(i);
+            await _subject.CreateBlogPostAsync(post);
+        }
+
+        var result = await _subject.GetBlogPostsAsync(page, 2);
+
+        result.Select(a => a.Title).Should().Equal(expectedTitles);
+    }
+
     [Fact]
     public async Task DeleteBlogPostAsync_DoesNothing_WhenPostDoesNotExist()
     {

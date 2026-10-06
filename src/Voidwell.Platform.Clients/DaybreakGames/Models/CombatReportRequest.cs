@@ -1,4 +1,4 @@
-namespace Voidwell.Platform.Api.Models;
+namespace Voidwell.Platform.Clients.DaybreakGames.Models;
 
 public class CombatReportRequest
 {

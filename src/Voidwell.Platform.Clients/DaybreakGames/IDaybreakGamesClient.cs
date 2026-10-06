@@ -1,4 +1,4 @@
-namespace Voidwell.Platform.Api.Clients;
+namespace Voidwell.Platform.Clients.DaybreakGames;
 
 public interface IDaybreakGamesClient
 {
