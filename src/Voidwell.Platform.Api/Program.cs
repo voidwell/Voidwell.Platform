@@ -1,11 +1,12 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
+using Voidwell.Common.Authentication;
+using Voidwell.Common.Cache;
+using Voidwell.Common.Logging;
+using Voidwell.Common.Swagger;
 using Voidwell.Platform.Api;
-using Voidwell.Platform.Api.Authentication;
-using Voidwell.Platform.Api.Cache;
 using Voidwell.Platform.Api.Extensions;
 using Voidwell.Platform.Api.Options;
-using Voidwell.Platform.Api.Swagger;
 using Voidwell.Platform.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -24,7 +25,6 @@ services.AddHttpContextAccessor();
 services.AddCache(options =>
 {
     options.RedisConfiguration = configuration.GetValue<string>("RedisConfiguration");
-    options.KeyPrefix = configuration.GetApplicationName();
 });
 services.AddEntityFrameworkContext(configuration);
 

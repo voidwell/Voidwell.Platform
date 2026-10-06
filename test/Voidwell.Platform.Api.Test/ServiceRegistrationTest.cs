@@ -1,7 +1,7 @@
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Voidwell.Platform.Api.Cache;
+using Voidwell.Common.Cache;
 using Voidwell.Platform.Api.Controllers;
 using Voidwell.Platform.Api.Services;
 using Voidwell.Platform.Data;

@@ -1,18 +1,21 @@
+using Voidwell.Common.Cache;
 using Voidwell.Platform.Api.Models;
 using Voidwell.Platform.Clients.DaybreakGames;
 using Voidwell.Platform.Data.Models;
 using Voidwell.Platform.Data.Repositories;
-using ZiggyCreatures.Caching.Fusion;
 
 namespace Voidwell.Platform.Api.Services;
 
 public class CustomEventService : ICustomEventService
 {
-    private readonly IFusionCache _cache;
+    private static readonly TimeSpan _eventListExpiry = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan _eventDetailsExpiry = TimeSpan.FromMinutes(15);
+
+    private readonly ICache _cache;
     private readonly IDaybreakGamesClient _daybreakGamesClient;
     private readonly ICustomEventRepository _customEventRepository;
 
-    public CustomEventService(ICustomEventRepository customEventRepository, IFusionCache cache, IDaybreakGamesClient daybreakGamesClient)
+    public CustomEventService(ICustomEventRepository customEventRepository, ICache cache, IDaybreakGamesClient daybreakGamesClient)
     {
         _customEventRepository = customEventRepository;
         _cache = cache;
@@ -25,7 +28,7 @@ public class CustomEventService : ICustomEventService
 
         if (events.Any())
         {
-            await _cache.SetAsync("customEventlist", events, CacheFor(TimeSpan.FromMinutes(5)));
+            await _cache.SetAsync("customEventlist", events, _eventListExpiry);
         }
 
         return events;
@@ -35,17 +38,17 @@ public class CustomEventService : ICustomEventService
     {
         var cacheKey = $"customEventList_{gameId}";
 
-        var cached = await _cache.TryGetAsync<IEnumerable<CustomEvent>>(cacheKey);
-        if (cached.HasValue)
+        IEnumerable<CustomEvent>? cached = null;
+        if (await _cache.TryGetAsync<IEnumerable<CustomEvent>>(cacheKey, value => cached = value) && cached != null)
         {
-            return cached.Value;
+            return cached;
         }
 
         var events = await _customEventRepository.GetAllCustomEventsAsync(gameId);
 
         if (events.Any())
         {
-            await _cache.SetAsync(cacheKey, events, CacheFor(TimeSpan.FromMinutes(5)));
+            await _cache.SetAsync(cacheKey, events, _eventListExpiry);
         }
 
         return events;
@@ -55,10 +58,10 @@ public class CustomEventService : ICustomEventService
     {
         var cacheKey = $"customEventLog_{eventId}";
 
-        var cached = await _cache.TryGetAsync<CustomEventDetails>(cacheKey);
-        if (cached.HasValue && cached.Value != null)
+        CustomEventDetails? cached = null;
+        if (await _cache.TryGetAsync<CustomEventDetails>(cacheKey, value => cached = value) && cached != null)
         {
-            return cached.Value;
+            return cached;
         }
 
         var customEvent = await _customEventRepository.GetCustomEventAsync(eventId);
@@ -88,7 +91,7 @@ public class CustomEventService : ICustomEventService
             Score = await territoryTask
         };
 
-        await _cache.SetAsync(cacheKey, customEventDetails, CacheFor(TimeSpan.FromMinutes(15)));
+        await _cache.SetAsync(cacheKey, customEventDetails, _eventDetailsExpiry);
 
         return customEventDetails;
     }
@@ -106,10 +109,5 @@ public class CustomEventService : ICustomEventService
     public Task DeleteCustomEventAsync(int eventId)
     {
         return _customEventRepository.RemoveCustomEventAsync(eventId);
-    }
-
-    private static FusionCacheEntryOptions CacheFor(TimeSpan duration)
-    {
-        return new FusionCacheEntryOptions { Duration = duration };
     }
 }

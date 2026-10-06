@@ -5,11 +5,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="ZiggyCreatures.FusionCache" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <InternalsVisibleTo Include="Voidwell.Platform.Clients.Test" />
+    <PackageReference Include="Voidwell.Common.Authentication" />
   </ItemGroup>
 
 </Project>

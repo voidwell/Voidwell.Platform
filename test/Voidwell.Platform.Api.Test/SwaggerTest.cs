@@ -7,9 +7,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Moq;
+using Voidwell.Common.Swagger;
 using Voidwell.Platform.Api.Controllers;
 using Voidwell.Platform.Api.Services;
-using Voidwell.Platform.Api.Swagger;
 using Xunit;
 
 namespace Voidwell.Platform.Api.Test;

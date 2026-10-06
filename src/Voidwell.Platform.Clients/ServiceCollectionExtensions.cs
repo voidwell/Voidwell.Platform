@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Voidwell.Platform.Clients.AuthenticatedHttpClient;
+using Voidwell.Common.Authentication;
 using Voidwell.Platform.Clients.DaybreakGames;
 using Voidwell.Platform.Clients.Keycloak;
 
@@ -28,7 +28,7 @@ public static class ServiceCollectionExtensions
             var baseUrl = sp.GetRequiredService<IOptions<DaybreakGamesOptions>>().Value.BaseUrl;
             client.BaseAddress = new Uri(baseUrl);
         })
-        .AddTokenHandler<DaybreakGamesClient>((sp, o) =>
+        .AddTokenHandler((sp, o) =>
         {
             var source = sp.GetRequiredService<IOptions<DaybreakGamesOptions>>().Value;
             o.TokenServiceAddress = source.TokenServiceAddress;
@@ -50,7 +50,7 @@ public static class ServiceCollectionExtensions
             var baseUrl = sp.GetRequiredService<IOptions<KeycloakOptions>>().Value.BaseUrl;
             client.BaseAddress = new Uri(baseUrl);
         })
-        .AddTokenHandler<KeycloakClient>((sp, o) =>
+        .AddTokenHandler((sp, o) =>
         {
             var source = sp.GetRequiredService<IOptions<KeycloakOptions>>().Value;
             o.TokenServiceAddress = source.TokenServiceAddress;

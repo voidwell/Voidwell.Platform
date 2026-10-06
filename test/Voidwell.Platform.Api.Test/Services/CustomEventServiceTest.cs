@@ -1,30 +1,38 @@
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
+using Voidwell.Common.Cache;
 using Voidwell.Platform.Api.Models;
 using Voidwell.Platform.Api.Services;
 using Voidwell.Platform.Clients.DaybreakGames;
 using Voidwell.Platform.Data.Models;
 using Voidwell.Platform.Data.Repositories;
 using Xunit;
-using ZiggyCreatures.Caching.Fusion;
 
 namespace Voidwell.Platform.Api.Test.Services;
 
 public sealed class CustomEventServiceTest : IDisposable
 {
     private readonly Mock<ICustomEventRepository> _repository = new();
-    private readonly FusionCache _cache = new(new FusionCacheOptions());
+    private readonly ServiceProvider _provider;
+    private readonly ICache _cache;
     private readonly Mock<IDaybreakGamesClient> _daybreakGamesClient = new();
     private readonly CustomEventService _subject;
 
     public CustomEventServiceTest()
     {
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddCache(options => options.KeyPrefix = "test");
+        _provider = services.BuildServiceProvider();
+        _cache = _provider.GetRequiredService<ICache>();
+
         _subject = new CustomEventService(_repository.Object, _cache, _daybreakGamesClient.Object);
     }
 
     public void Dispose()
     {
-        _cache.Dispose();
+        _provider.Dispose();
     }
 
     [Fact]
@@ -36,9 +44,8 @@ public sealed class CustomEventServiceTest : IDisposable
         var result = await _subject.GetAllCustomEventsAsync();
 
         result.Should().BeEquivalentTo(events);
-        var cached = await _cache.TryGetAsync<IEnumerable<CustomEvent>>("customEventlist", token: TestContext.Current.CancellationToken);
-        cached.HasValue.Should().BeTrue();
-        cached.Value.Should().BeEquivalentTo(events);
+        var cached = await _cache.GetAsync<IEnumerable<CustomEvent>>("customEventlist");
+        cached.Should().BeEquivalentTo(events);
     }
 
     [Fact]
@@ -49,15 +56,15 @@ public sealed class CustomEventServiceTest : IDisposable
         var result = await _subject.GetAllCustomEventsAsync();
 
         result.Should().BeEmpty();
-        var cached = await _cache.TryGetAsync<IEnumerable<CustomEvent>>("customEventlist", token: TestContext.Current.CancellationToken);
-        cached.HasValue.Should().BeFalse();
+        var cached = await _cache.GetAsync<IEnumerable<CustomEvent>>("customEventlist");
+        cached.Should().BeNull();
     }
 
     [Fact]
     public async Task GetAllCustomEventsByGameIdAsync_ReturnsCachedEvents()
     {
         var cached = new[] { CreateEvent(1) };
-        await _cache.SetAsync<IEnumerable<CustomEvent>>("customEventList_game1", cached, token: TestContext.Current.CancellationToken);
+        await _cache.SetAsync("customEventList_game1", cached);
 
         var result = await _subject.GetAllCustomEventsByGameIdAsync("game1");
 
@@ -74,15 +81,15 @@ public sealed class CustomEventServiceTest : IDisposable
         var result = await _subject.GetAllCustomEventsByGameIdAsync("game1");
 
         result.Should().BeEquivalentTo(events);
-        var cached = await _cache.TryGetAsync<IEnumerable<CustomEvent>>("customEventList_game1", token: TestContext.Current.CancellationToken);
-        cached.Value.Should().BeEquivalentTo(events);
+        var cached = await _cache.GetAsync<IEnumerable<CustomEvent>>("customEventList_game1");
+        cached.Should().BeEquivalentTo(events);
     }
 
     [Fact]
     public async Task GetCustomEventAsync_ReturnsCachedDetails()
     {
         var cached = new CustomEventDetails { Id = 5, Name = "Cached" };
-        await _cache.SetAsync("customEventLog_5", cached, token: TestContext.Current.CancellationToken);
+        await _cache.SetAsync("customEventLog_5", cached);
 
         var result = await _subject.GetCustomEventAsync(5);
 
@@ -97,8 +104,8 @@ public sealed class CustomEventServiceTest : IDisposable
 
         result.Should().BeNull();
         _daybreakGamesClient.Verify(a => a.GetCombatReport(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>()), Times.Never);
-        var cached = await _cache.TryGetAsync<CustomEventDetails>("customEventLog_5", token: TestContext.Current.CancellationToken);
-        cached.HasValue.Should().BeFalse();
+        var cached = await _cache.GetAsync<CustomEventDetails>("customEventLog_5");
+        cached.Should().BeNull();
     }
 
     [Fact]
@@ -126,8 +133,8 @@ public sealed class CustomEventServiceTest : IDisposable
         result.Score.Should().BeSameAs(score);
         result.Teams.Should().ContainSingle()
             .Which.Should().BeEquivalentTo(new CustomEventTeamModel { TeamId = "t1", Name = "Team 1" });
-        var cached = await _cache.TryGetAsync<CustomEventDetails>("customEventLog_5", token: TestContext.Current.CancellationToken);
-        cached.Value.Should().BeSameAs(result);
+        var cached = await _cache.GetAsync<CustomEventDetails>("customEventLog_5");
+        cached.Should().BeSameAs(result);
     }
 
     [Fact]
