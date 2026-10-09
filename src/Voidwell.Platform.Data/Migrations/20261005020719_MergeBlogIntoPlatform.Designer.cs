@@ -56,9 +56,9 @@ namespace Voidwell.Platform.Data.Migrations
                         .HasColumnName("title");
 
                     b.HasKey("Id")
-                        .HasName("pk_blog_posts");
+                        .HasName("pk_blog_post");
 
-                    b.ToTable("blog_posts", (string)null);
+                    b.ToTable("blog_post", (string)null);
                 });
 
             modelBuilder.Entity("Voidwell.Platform.Data.Models.BlogPostTag", b =>

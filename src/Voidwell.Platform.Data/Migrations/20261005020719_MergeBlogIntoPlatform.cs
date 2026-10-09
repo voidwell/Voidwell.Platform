@@ -11,24 +11,21 @@ namespace Voidwell.Platform.Data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // The legacy "blog_post" table is intentionally left in place. Its schema is incompatible
-            // with the Voidwell.Blog schema created below, so its data must be migrated separately.
-            migrationBuilder.CreateTable(
-                name: "blog_posts",
-                columns: table => new
-                {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    title = table.Column<string>(type: "text", nullable: false),
-                    author_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    publish_date = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    markdown_content = table.Column<string>(type: "text", nullable: false),
-                    html_content = table.Column<string>(type: "text", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_blog_posts", x => x.id);
-                });
+            // The legacy "blog_post" table is updated in place to match the Voidwell.Blog schema.
+            migrationBuilder.RenameColumn(
+                name: "content",
+                table: "blog_post",
+                newName: "html_content");
 
+            // Legacy posts only have rendered content, so seed the markdown column from it.
+            migrationBuilder.AddColumn<string>(
+                name: "markdown_content",
+                table: "blog_post",
+                type: "text",
+                nullable: false,
+                defaultValue: "");
+
+            migrationBuilder.Sql("UPDATE blog_post SET markdown_content = html_content;");
             migrationBuilder.CreateTable(
                 name: "blog_post_tags",
                 columns: table => new
@@ -61,7 +58,7 @@ namespace Voidwell.Platform.Data.Migrations
                     table.ForeignKey(
                         name: "fk_blog_post_tag_maps_blog_posts_blog_post_id",
                         column: x => x.blog_post_id,
-                        principalTable: "blog_posts",
+                        principalTable: "blog_post",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -87,8 +84,14 @@ namespace Voidwell.Platform.Data.Migrations
             migrationBuilder.DropTable(
                 name: "blog_post_tags");
 
-            migrationBuilder.DropTable(
-                name: "blog_posts");
+            migrationBuilder.DropColumn(
+                name: "markdown_content",
+                table: "blog_post");
+
+            migrationBuilder.RenameColumn(
+                name: "html_content",
+                table: "blog_post",
+                newName: "content");
         }
     }
 }
