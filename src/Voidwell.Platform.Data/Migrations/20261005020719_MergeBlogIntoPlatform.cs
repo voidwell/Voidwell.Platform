@@ -26,6 +26,11 @@ namespace Voidwell.Platform.Data.Migrations
                 defaultValue: "");
 
             migrationBuilder.Sql("UPDATE blog_post SET markdown_content = html_content;");
+
+            // Legacy ids are text and dates are timestamp without time zone; convert them to uuid / timestamptz.
+            migrationBuilder.Sql("ALTER TABLE blog_post ALTER COLUMN id TYPE uuid USING id::uuid;");
+            migrationBuilder.Sql("ALTER TABLE blog_post ALTER COLUMN publish_date TYPE timestamp with time zone USING publish_date AT TIME ZONE 'UTC';");
+
             migrationBuilder.CreateTable(
                 name: "blog_post_tags",
                 columns: table => new
@@ -83,6 +88,9 @@ namespace Voidwell.Platform.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "blog_post_tags");
+
+            migrationBuilder.Sql("ALTER TABLE blog_post ALTER COLUMN publish_date TYPE timestamp without time zone USING publish_date AT TIME ZONE 'UTC';");
+            migrationBuilder.Sql("ALTER TABLE blog_post ALTER COLUMN id TYPE text USING id::text;");
 
             migrationBuilder.DropColumn(
                 name: "markdown_content",
