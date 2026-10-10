@@ -47,6 +47,18 @@ public sealed class KeycloakClientTest : IDisposable
     }
 
     [Fact]
+    public async Task GetDisplayNameAsync_ReturnsDisplayNameAttribute_WhenPresent()
+    {
+        var userId = Guid.NewGuid();
+        _responses[$"GET http://keycloak.test/admin/realms/voidwell/users/{userId}"] =
+            (HttpStatusCode.OK, $$$"""{"id":"{{{userId}}}","username":"someone","attributes":{"displayName":["Some One"]}}""");
+
+        var result = await _subject.GetDisplayNameAsync(userId);
+
+        result!.Name.Should().Be("Some One");
+    }
+
+    [Fact]
     public async Task GetDisplayNameAsync_ReturnsNull_WhenUserDoesNotExist()
     {
         var userId = Guid.NewGuid();

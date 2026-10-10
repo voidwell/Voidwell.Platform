@@ -9,6 +9,8 @@ namespace Voidwell.Platform.Clients.Keycloak;
 /// </summary>
 public class KeycloakClient : IKeycloakClient
 {
+    private const string _displayNameAttribute = "displayName";
+
     private readonly HttpClient _httpClient;
     private readonly KeycloakOptions _options;
 
@@ -32,7 +34,20 @@ public class KeycloakClient : IKeycloakClient
             return null;
         }
 
-        return new DisplayName { UserId = user.Id, Name = user.Username };
+        return new DisplayName { UserId = user.Id, Name = GetDisplayName(user) };
+    }
+
+    private static string? GetDisplayName(KeycloakUser user)
+    {
+        // Prefer the user's "displayName" attribute, falling back to the username when it is not set
+        if (user.Attributes != null
+            && user.Attributes.TryGetValue(_displayNameAttribute, out var values)
+            && values.FirstOrDefault(v => !string.IsNullOrWhiteSpace(v)) is { } displayName)
+        {
+            return displayName;
+        }
+
+        return user.Username;
     }
 
     public async Task<IEnumerable<DisplayName>> GetDisplayNamesAsync(IEnumerable<Guid> userIds)
