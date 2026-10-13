@@ -17,57 +17,57 @@ public class CustomEventController : Controller
     }
 
     [HttpGet("{eventId}")]
-    public async Task<ActionResult> GetCustomEventById(int eventId)
+    public async Task<ActionResult> GetCustomEventById(int eventId, CancellationToken cancellationToken)
     {
-        var result = await _customEventService.GetCustomEventAsync(eventId);
+        var result = await _customEventService.GetCustomEventAsync(eventId, cancellationToken);
         return Ok(result);
     }
 
     [HttpGet]
-    public async Task<ActionResult> GetAllCustomEvents()
+    public async Task<ActionResult> GetAllCustomEvents(CancellationToken cancellationToken)
     {
-        var result = await _customEventService.GetAllCustomEventsAsync();
+        var result = await _customEventService.GetCustomEventsAsync(cancellationToken);
         return Ok(result);
     }
 
     [HttpGet("game/{gameId}")]
-    public async Task<ActionResult> GetAllCustomEventsByGame(string gameId)
+    public async Task<ActionResult> GetAllCustomEventsByGame(string gameId, CancellationToken cancellationToken)
     {
-        var result = await _customEventService.GetAllCustomEventsByGameIdAsync(gameId);
+        var result = await _customEventService.GetCustomEventsAsync(gameId, cancellationToken);
         return Ok(result);
     }
 
     [HttpPost]
     [Authorize(Roles = AuthConstants.Roles.Events)]
-    public async Task<ActionResult> PostCustomEvent([FromBody] CustomEvent customEvent)
+    public async Task<ActionResult> PostCustomEvent([FromBody] CustomEvent customEvent, CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
         {
             return BadRequest(ModelState);
         }
 
-        var result = await _customEventService.CreateCustomEventAsync(customEvent);
+        var result = await _customEventService.CreateCustomEventAsync(customEvent, cancellationToken);
         return Created("gameevent", result);
     }
 
     [HttpPut("{eventId}")]
     [Authorize(Roles = AuthConstants.Roles.Events)]
-    public async Task<ActionResult> PutCustomEvent(int eventId, [FromBody] CustomEvent customEvent)
+    public async Task<ActionResult> PutCustomEvent(int eventId, [FromBody] CustomEvent customEvent, CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
         {
             return BadRequest(ModelState);
         }
 
-        var result = await _customEventService.UpdateCustomEventAsync(eventId, customEvent);
+        var result = await _customEventService.UpdateCustomEventAsync(eventId, customEvent, cancellationToken);
         return Ok(result);
     }
 
     [HttpDelete("{eventId}")]
     [Authorize(Roles = AuthConstants.Roles.Administrator)]
-    public async Task<ActionResult> DeleteCustomEvent(int eventId)
+    public async Task<ActionResult> DeleteCustomEvent(int eventId, CancellationToken cancellationToken)
     {
-        await _customEventService.DeleteCustomEventAsync(eventId);
+        await _customEventService.DeleteCustomEventAsync(eventId, cancellationToken);
         return NoContent();
     }
 }

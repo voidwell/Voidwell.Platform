@@ -18,7 +18,7 @@ public class DaybreakGamesClientTest
         using var handler = new StubHttpMessageHandler("""{"kills":3}""");
         using var httpClient = new HttpClient(handler) { BaseAddress = _baseAddress };
 
-        var result = await new DaybreakGamesClient(httpClient).GetCombatReport("17", "2", start, end);
+        var result = await new DaybreakGamesClient(httpClient).GetCombatReportAsync("17", "2", start, end, TestContext.Current.CancellationToken);
 
         handler.LastRequest.Method.Should().Be(HttpMethod.Post);
         handler.LastRequest.RequestUri.Should().Be(new Uri(_baseAddress, "ps2/combatReport"));
@@ -37,7 +37,7 @@ public class DaybreakGamesClientTest
         using var handler = new StubHttpMessageHandler("""{"vs":1}""");
         using var httpClient = new HttpClient(handler) { BaseAddress = _baseAddress };
 
-        var result = await new DaybreakGamesClient(httpClient).GetTerritoryScoreFromDate("17", "2", end);
+        var result = await new DaybreakGamesClient(httpClient).GetTerritoryScoreFromDateAsync("17", "2", end, TestContext.Current.CancellationToken);
 
         handler.LastRequest.RequestUri.Should().Be(new Uri(_baseAddress, "ps2/map/territory"));
         using var body = JsonDocument.Parse(handler.LastRequestBody);
@@ -51,7 +51,7 @@ public class DaybreakGamesClientTest
         using var handler = new StubHttpMessageHandler("{}", HttpStatusCode.BadGateway);
         using var httpClient = new HttpClient(handler) { BaseAddress = _baseAddress };
 
-        var act = () => new DaybreakGamesClient(httpClient).GetCombatReport("17", "2", DateTime.UtcNow, DateTime.UtcNow);
+        var act = () => new DaybreakGamesClient(httpClient).GetCombatReportAsync("17", "2", DateTime.UtcNow, DateTime.UtcNow, TestContext.Current.CancellationToken);
 
         await act.Should().ThrowAsync<HttpRequestException>();
     }

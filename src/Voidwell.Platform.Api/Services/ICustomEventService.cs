@@ -5,10 +5,10 @@ namespace Voidwell.Platform.Api.Services;
 
 public interface ICustomEventService
 {
-    Task<IEnumerable<CustomEvent>> GetAllCustomEventsAsync();
-    Task<IEnumerable<CustomEvent>> GetAllCustomEventsByGameIdAsync(string gameId);
-    Task<CustomEventDetails?> GetCustomEventAsync(int eventId);
-    Task<CustomEvent> CreateCustomEventAsync(CustomEvent customEvent);
-    Task<CustomEvent> UpdateCustomEventAsync(int eventId, CustomEvent customEvent);
-    Task DeleteCustomEventAsync(int eventId);
+    Task<IEnumerable<CustomEvent>> GetCustomEventsAsync(CancellationToken cancellationToken);
+    Task<IEnumerable<CustomEvent>> GetCustomEventsAsync(string gameId, CancellationToken cancellationToken);
+    Task<CustomEventDetails?> GetCustomEventAsync(int eventId, CancellationToken cancellationToken);
+    Task<CustomEvent> CreateCustomEventAsync(CustomEvent customEvent, CancellationToken cancellationToken);
+    Task<CustomEvent> UpdateCustomEventAsync(int eventId, CustomEvent customEvent, CancellationToken cancellationToken);
+    Task DeleteCustomEventAsync(int eventId, CancellationToken cancellationToken);
 }

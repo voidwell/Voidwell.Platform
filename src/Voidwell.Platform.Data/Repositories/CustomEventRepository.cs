@@ -12,55 +12,63 @@ public class CustomEventRepository : ICustomEventRepository
         _dbContextFactory = dbContextFactory;
     }
 
-    public async Task<CustomEvent?> GetCustomEventAsync(int customEventId)
+    public async Task<CustomEvent?> GetCustomEventAsync(int customEventId, CancellationToken cancellationToken)
     {
         using var dbContext = _dbContextFactory.CreateDbContext();
 
-        return await GetCustomEventAsync(dbContext, customEventId);
+        return await dbContext.CustomEvents
+            .Include(a => a.Teams)
+            .SingleOrDefaultAsync(a => a.Id == customEventId, cancellationToken);
     }
 
-    public async Task<IEnumerable<CustomEvent>> GetAllCustomEventsAsync(string? gameId = null, int skip = 0, int limit = -1)
+    public async Task<IEnumerable<CustomEvent>> GetCustomEventsAsync(CancellationToken cancellationToken)
     {
         using var dbContext = _dbContextFactory.CreateDbContext();
 
         var query = dbContext.CustomEvents
             .Include(a => a.Teams)
-            .Skip(skip)
             .OrderByDescending(a => a.StartDate)
             .AsQueryable();
 
-        if (!string.IsNullOrWhiteSpace(gameId))
-        {
-            query = query.Where(a => a.GameId == gameId);
-        }
-
-        if (limit > 0)
-        {
-            query = query.Take(limit);
-        }
-
-        return await query.ToListAsync();
+        return await query.ToListAsync(cancellationToken);
     }
 
-    public async Task<CustomEvent> CreateCustomEventAsync(CustomEvent customEvent)
+    public async Task<IEnumerable<CustomEvent>> GetCustomEventsAsync(string gameId, CancellationToken cancellationToken)
     {
         using var dbContext = _dbContextFactory.CreateDbContext();
 
-        var dbEvent = await dbContext.CustomEvents.AddAsync(customEvent);
-        await dbContext.SaveChangesAsync();
+        var query = dbContext.CustomEvents
+            .Include(a => a.Teams)
+            .Where(a => a.GameId == gameId)
+            .OrderByDescending(a => a.StartDate)
+            .AsQueryable();
+
+        return await query.ToListAsync(cancellationToken);
+    }
+
+    public async Task<CustomEvent> CreateCustomEventAsync(CustomEvent customEvent, CancellationToken cancellationToken)
+    {
+        using var dbContext = _dbContextFactory.CreateDbContext();
+
+        var dbEvent = await dbContext.CustomEvents.AddAsync(customEvent, cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return dbEvent.Entity;
     }
 
-    public async Task<CustomEvent> UpdateCustomEventAsync(CustomEvent customEvent)
+    public async Task<CustomEvent> UpdateCustomEventAsync(CustomEvent customEvent, CancellationToken cancellationToken)
     {
         var updatedTeams = customEvent.Teams
             ?? throw new ArgumentException("Teams must be provided when updating a custom event.", nameof(customEvent));
 
         using var dbContext = _dbContextFactory.CreateDbContext();
 
-        var oldCustomEvent = await GetCustomEventAsync(customEvent.Id)
+        var oldCustomEvent = await dbContext.CustomEvents
+            .AsNoTracking()
+            .Include(a => a.Teams)
+            .SingleOrDefaultAsync(a => a.Id == customEvent.Id, cancellationToken)
             ?? throw new InvalidOperationException($"Custom event {customEvent.Id} does not exist.");
+
         var oldTeams = (oldCustomEvent.Teams ?? []).ToList();
 
         var addedTeams = updatedTeams.ExceptBy(oldTeams, a => a.TeamId).ToList();
@@ -70,28 +78,38 @@ public class CustomEventRepository : ICustomEventRepository
         addedTeams.ForEach(a => dbContext.Entry(a).State = EntityState.Added);
 
         var dbEvent = dbContext.CustomEvents.Update(customEvent);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return dbEvent.Entity;
     }
 
-    public async Task RemoveCustomEventAsync(int customEventId)
+    public async Task RemoveCustomEventAsync(CustomEvent customEvent, CancellationToken cancellationToken)
     {
         using var dbContext = _dbContextFactory.CreateDbContext();
 
-        var customEvent = await GetCustomEventAsync(dbContext, customEventId);
         if (customEvent == null)
         {
             return;
         }
 
         dbContext.CustomEvents.Remove(customEvent);
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    private static Task<CustomEvent?> GetCustomEventAsync(VoidwellDbContext dbContext, int customEventId)
+    public async Task RemoveCustomEventAsync(int customEventId, CancellationToken cancellationToken)
     {
-        return dbContext.CustomEvents
+        using var dbContext = _dbContextFactory.CreateDbContext();
+
+        var customEvent = await dbContext.CustomEvents
             .Include(a => a.Teams)
-            .SingleOrDefaultAsync(a => a.Id == customEventId);
+            .SingleOrDefaultAsync(a => a.Id == customEventId, cancellationToken);
+
+        if (customEvent == null)
+        {
+            return;
+        }
+
+        dbContext.CustomEvents.Remove(customEvent);
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 }

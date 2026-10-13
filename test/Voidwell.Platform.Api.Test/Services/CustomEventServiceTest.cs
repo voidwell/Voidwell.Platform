@@ -36,12 +36,12 @@ public sealed class CustomEventServiceTest : IDisposable
     }
 
     [Fact]
-    public async Task GetAllCustomEventsAsync_ReturnsEventsAndCaches()
+    public async Task GetCustomEventsAsync_ReturnsEventsAndCaches()
     {
         var events = new[] { CreateEvent(1), CreateEvent(2) };
-        _repository.Setup(a => a.GetAllCustomEventsAsync(null, 0, -1)).ReturnsAsync(events);
+        _repository.Setup(a => a.GetCustomEventsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(events);
 
-        var result = await _subject.GetAllCustomEventsAsync();
+        var result = await _subject.GetCustomEventsAsync(TestContext.Current.CancellationToken);
 
         result.Should().BeEquivalentTo(events);
         var cached = await _cache.GetAsync<IEnumerable<CustomEvent>>("customEventlist");
@@ -49,11 +49,11 @@ public sealed class CustomEventServiceTest : IDisposable
     }
 
     [Fact]
-    public async Task GetAllCustomEventsAsync_DoesNotCache_WhenThereAreNoEvents()
+    public async Task GetCustomEventsAsync_DoesNotCache_WhenThereAreNoEvents()
     {
-        _repository.Setup(a => a.GetAllCustomEventsAsync(null, 0, -1)).ReturnsAsync([]);
+        _repository.Setup(a => a.GetCustomEventsAsync(It.IsAny<CancellationToken>())).ReturnsAsync([]);
 
-        var result = await _subject.GetAllCustomEventsAsync();
+        var result = await _subject.GetCustomEventsAsync(TestContext.Current.CancellationToken);
 
         result.Should().BeEmpty();
         var cached = await _cache.GetAsync<IEnumerable<CustomEvent>>("customEventlist");
@@ -64,24 +64,24 @@ public sealed class CustomEventServiceTest : IDisposable
     public async Task GetAllCustomEventsByGameIdAsync_ReturnsCachedEvents()
     {
         var cached = new[] { CreateEvent(1) };
-        await _cache.SetAsync("customEventList_game1", cached);
+        await _cache.SetAsync("customEventlist_game1", cached);
 
-        var result = await _subject.GetAllCustomEventsByGameIdAsync("game1");
+        var result = await _subject.GetCustomEventsAsync("game1", TestContext.Current.CancellationToken);
 
         result.Should().BeEquivalentTo(cached);
-        _repository.Verify(a => a.GetAllCustomEventsAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>()), Times.Never);
+        _repository.Verify(a => a.GetCustomEventsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
     public async Task GetAllCustomEventsByGameIdAsync_LoadsFromRepositoryAndCaches_WhenNotCached()
     {
         var events = new[] { CreateEvent(1) };
-        _repository.Setup(a => a.GetAllCustomEventsAsync("game1", 0, -1)).ReturnsAsync(events);
+        _repository.Setup(a => a.GetCustomEventsAsync("game1", It.IsAny<CancellationToken>())).ReturnsAsync(events);
 
-        var result = await _subject.GetAllCustomEventsByGameIdAsync("game1");
+        var result = await _subject.GetCustomEventsAsync("game1", TestContext.Current.CancellationToken);
 
         result.Should().BeEquivalentTo(events);
-        var cached = await _cache.GetAsync<IEnumerable<CustomEvent>>("customEventList_game1");
+        var cached = await _cache.GetAsync<IEnumerable<CustomEvent>>("customEventlist_game1");
         cached.Should().BeEquivalentTo(events);
     }
 
@@ -91,19 +91,19 @@ public sealed class CustomEventServiceTest : IDisposable
         var cached = new CustomEventDetails { Id = 5, Name = "Cached" };
         await _cache.SetAsync("customEventLog_5", cached);
 
-        var result = await _subject.GetCustomEventAsync(5);
+        var result = await _subject.GetCustomEventAsync(5, TestContext.Current.CancellationToken);
 
         result.Should().BeEquivalentTo(cached);
-        _repository.Verify(a => a.GetCustomEventAsync(It.IsAny<int>()), Times.Never);
+        _repository.Verify(a => a.GetCustomEventAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
     public async Task GetCustomEventAsync_ReturnsNullAndDoesNotCache_WhenEventDoesNotExist()
     {
-        var result = await _subject.GetCustomEventAsync(5);
+        var result = await _subject.GetCustomEventAsync(5, TestContext.Current.CancellationToken);
 
         result.Should().BeNull();
-        _daybreakGamesClient.Verify(a => a.GetCombatReport(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>()), Times.Never);
+        _daybreakGamesClient.Verify(a => a.GetCombatReportAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Never);
         var cached = await _cache.GetAsync<CustomEventDetails>("customEventLog_5");
         cached.Should().BeNull();
     }
@@ -116,11 +116,11 @@ public sealed class CustomEventServiceTest : IDisposable
         var log = new object();
         var score = new object();
 
-        _repository.Setup(a => a.GetCustomEventAsync(5)).ReturnsAsync(customEvent);
-        _daybreakGamesClient.Setup(a => a.GetCombatReport("server", "map", customEvent.StartDate, customEvent.EndDate)).ReturnsAsync(log);
-        _daybreakGamesClient.Setup(a => a.GetTerritoryScoreFromDate("server", "map", customEvent.EndDate)).ReturnsAsync(score);
+        _repository.Setup(a => a.GetCustomEventAsync(5, It.IsAny<CancellationToken>())).ReturnsAsync(customEvent);
+        _daybreakGamesClient.Setup(a => a.GetCombatReportAsync("server", "map", customEvent.StartDate, customEvent.EndDate, It.IsAny<CancellationToken>())).ReturnsAsync(log);
+        _daybreakGamesClient.Setup(a => a.GetTerritoryScoreFromDateAsync("server", "map", customEvent.EndDate, It.IsAny<CancellationToken>())).ReturnsAsync(score);
 
-        var result = await _subject.GetCustomEventAsync(5);
+        var result = await _subject.GetCustomEventAsync(5, TestContext.Current.CancellationToken);
 
         result.Should().NotBeNull();
         result.Id.Should().Be(5);
@@ -141,9 +141,9 @@ public sealed class CustomEventServiceTest : IDisposable
     public async Task CreateCustomEventAsync_DelegatesToRepository()
     {
         var customEvent = CreateEvent(0);
-        _repository.Setup(a => a.CreateCustomEventAsync(customEvent)).ReturnsAsync(customEvent);
+        _repository.Setup(a => a.CreateCustomEventAsync(customEvent, It.IsAny<CancellationToken>())).ReturnsAsync(customEvent);
 
-        var result = await _subject.CreateCustomEventAsync(customEvent);
+        var result = await _subject.CreateCustomEventAsync(customEvent, TestContext.Current.CancellationToken);
 
         result.Should().BeSameAs(customEvent);
     }
@@ -152,9 +152,9 @@ public sealed class CustomEventServiceTest : IDisposable
     public async Task UpdateCustomEventAsync_DelegatesToRepository()
     {
         var customEvent = CreateEvent(3);
-        _repository.Setup(a => a.UpdateCustomEventAsync(customEvent)).ReturnsAsync(customEvent);
+        _repository.Setup(a => a.UpdateCustomEventAsync(customEvent, It.IsAny<CancellationToken>())).ReturnsAsync(customEvent);
 
-        var result = await _subject.UpdateCustomEventAsync(3, customEvent);
+        var result = await _subject.UpdateCustomEventAsync(3, customEvent, TestContext.Current.CancellationToken);
 
         result.Should().BeSameAs(customEvent);
     }
@@ -162,11 +162,13 @@ public sealed class CustomEventServiceTest : IDisposable
     [Fact]
     public async Task DeleteCustomEventAsync_DelegatesToRepository()
     {
-        _repository.Setup(a => a.RemoveCustomEventAsync(3)).Returns(Task.CompletedTask);
+        var customEvent = CreateEvent(3);
+        _repository.Setup(a => a.GetCustomEventAsync(3, It.IsAny<CancellationToken>())).ReturnsAsync(customEvent);
+        _repository.Setup(a => a.RemoveCustomEventAsync(customEvent, It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
-        await _subject.DeleteCustomEventAsync(3);
+        await _subject.DeleteCustomEventAsync(3, TestContext.Current.CancellationToken);
 
-        _repository.Verify(a => a.RemoveCustomEventAsync(3), Times.Once);
+        _repository.Verify(a => a.RemoveCustomEventAsync(customEvent, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     private static CustomEvent CreateEvent(int id)

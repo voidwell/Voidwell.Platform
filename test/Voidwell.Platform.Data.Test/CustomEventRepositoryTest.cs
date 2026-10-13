@@ -24,11 +24,11 @@ public class CustomEventRepositoryTest
             Name = "Event",
             GameId = "game",
             Teams = [new CustomEventTeam { TeamId = "t1", Name = "Team 1" }]
-        });
+        }, TestContext.Current.CancellationToken);
 
         created.Id.Should().BeGreaterThan(0);
 
-        var loaded = await _subject.GetCustomEventAsync(created.Id);
+        var loaded = await _subject.GetCustomEventAsync(created.Id, TestContext.Current.CancellationToken);
         loaded.Should().NotBeNull();
         loaded.Name.Should().Be("Event");
         loaded.Teams.Should().ContainSingle().Which.TeamId.Should().Be("t1");
@@ -37,40 +37,29 @@ public class CustomEventRepositoryTest
     [Fact]
     public async Task GetCustomEventAsync_ReturnsNull_WhenEventDoesNotExist()
     {
-        var result = await _subject.GetCustomEventAsync(123);
+        var result = await _subject.GetCustomEventAsync(123, TestContext.Current.CancellationToken);
 
         result.Should().BeNull();
     }
 
     [Fact]
-    public async Task GetAllCustomEventsAsync_ReturnsEventsNewestFirst()
+    public async Task GetCustomEventsAsync_ReturnsEventsNewestFirst()
     {
-        await _subject.CreateCustomEventAsync(new CustomEvent { Name = "Old", StartDate = new DateTime(2024, 1, 1) });
-        await _subject.CreateCustomEventAsync(new CustomEvent { Name = "New", StartDate = new DateTime(2024, 6, 1) });
+        await _subject.CreateCustomEventAsync(new CustomEvent { Name = "Old", StartDate = new DateTime(2024, 1, 1) }, TestContext.Current.CancellationToken);
+        await _subject.CreateCustomEventAsync(new CustomEvent { Name = "New", StartDate = new DateTime(2024, 6, 1) }, TestContext.Current.CancellationToken);
 
-        var result = await _subject.GetAllCustomEventsAsync();
+        var result = await _subject.GetCustomEventsAsync(TestContext.Current.CancellationToken);
 
         result.Select(a => a.Name).Should().Equal("New", "Old");
     }
 
     [Fact]
-    public async Task GetAllCustomEventsAsync_FiltersByGameId()
+    public async Task GetCustomEventsAsync_FiltersByGameId()
     {
-        await _subject.CreateCustomEventAsync(new CustomEvent { Name = "A", GameId = "game1" });
-        await _subject.CreateCustomEventAsync(new CustomEvent { Name = "B", GameId = "game2" });
+        await _subject.CreateCustomEventAsync(new CustomEvent { Name = "A", GameId = "game1" }, TestContext.Current.CancellationToken);
+        await _subject.CreateCustomEventAsync(new CustomEvent { Name = "B", GameId = "game2" }, TestContext.Current.CancellationToken);
 
-        var result = await _subject.GetAllCustomEventsAsync("game2");
-
-        result.Should().ContainSingle().Which.Name.Should().Be("B");
-    }
-
-    [Fact]
-    public async Task GetAllCustomEventsAsync_AppliesLimit()
-    {
-        await _subject.CreateCustomEventAsync(new CustomEvent { Name = "A", StartDate = new DateTime(2024, 1, 1) });
-        await _subject.CreateCustomEventAsync(new CustomEvent { Name = "B", StartDate = new DateTime(2024, 2, 1) });
-
-        var result = await _subject.GetAllCustomEventsAsync(limit: 1);
+        var result = await _subject.GetCustomEventsAsync("game2", TestContext.Current.CancellationToken);
 
         result.Should().ContainSingle().Which.Name.Should().Be("B");
     }
@@ -86,7 +75,7 @@ public class CustomEventRepositoryTest
                 new CustomEventTeam { TeamId = "keep", Name = "Keep" },
                 new CustomEventTeam { TeamId = "drop", Name = "Drop" }
             }
-        });
+        }, TestContext.Current.CancellationToken);
 
         await _subject.UpdateCustomEventAsync(new CustomEvent
         {
@@ -97,9 +86,9 @@ public class CustomEventRepositoryTest
                 new CustomEventTeam { CustomEventId = created.Id, TeamId = "keep", Name = "Keep" },
                 new CustomEventTeam { CustomEventId = created.Id, TeamId = "add", Name = "Add" }
             }
-        });
+        }, TestContext.Current.CancellationToken);
 
-        var loaded = await _subject.GetCustomEventAsync(created.Id);
+        var loaded = await _subject.GetCustomEventAsync(created.Id, TestContext.Current.CancellationToken);
         loaded.Name.Should().Be("Renamed");
         loaded.Teams.Select(a => a.TeamId).Should().BeEquivalentTo("keep", "add");
     }
@@ -107,7 +96,7 @@ public class CustomEventRepositoryTest
     [Fact]
     public async Task UpdateCustomEventAsync_Throws_WhenTeamsAreMissing()
     {
-        var act = () => _subject.UpdateCustomEventAsync(new CustomEvent { Id = 1, Name = "Event" });
+        var act = () => _subject.UpdateCustomEventAsync(new CustomEvent { Id = 1, Name = "Event" }, TestContext.Current.CancellationToken);
 
         await act.Should().ThrowAsync<ArgumentException>();
     }
@@ -115,7 +104,7 @@ public class CustomEventRepositoryTest
     [Fact]
     public async Task UpdateCustomEventAsync_Throws_WhenEventDoesNotExist()
     {
-        var act = () => _subject.UpdateCustomEventAsync(new CustomEvent { Id = 99, Name = "Event", Teams = [] });
+        var act = () => _subject.UpdateCustomEventAsync(new CustomEvent { Id = 99, Name = "Event", Teams = [] }, TestContext.Current.CancellationToken);
 
         await act.Should().ThrowAsync<InvalidOperationException>();
     }
@@ -123,7 +112,7 @@ public class CustomEventRepositoryTest
     [Fact]
     public async Task RemoveCustomEventAsync_DoesNothing_WhenEventDoesNotExist()
     {
-        var act = () => _subject.RemoveCustomEventAsync(99);
+        var act = () => _subject.RemoveCustomEventAsync(99, TestContext.Current.CancellationToken);
 
         await act.Should().NotThrowAsync();
     }

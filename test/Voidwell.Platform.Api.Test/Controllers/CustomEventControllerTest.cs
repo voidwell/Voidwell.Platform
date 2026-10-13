@@ -28,9 +28,9 @@ public sealed class CustomEventControllerTest : IDisposable
     public async Task GetCustomEventById_ReturnsDetails()
     {
         var details = new CustomEventDetails { Id = 4 };
-        _service.Setup(a => a.GetCustomEventAsync(4)).ReturnsAsync(details);
+        _service.Setup(a => a.GetCustomEventAsync(4, It.IsAny<CancellationToken>())).ReturnsAsync(details);
 
-        var result = await _subject.GetCustomEventById(4);
+        var result = await _subject.GetCustomEventById(4, TestContext.Current.CancellationToken);
 
         result.Should().BeOfType<OkObjectResult>().Which.Value.Should().BeSameAs(details);
     }
@@ -39,9 +39,9 @@ public sealed class CustomEventControllerTest : IDisposable
     public async Task GetAllCustomEvents_ReturnsEvents()
     {
         var events = new[] { new CustomEvent { Id = 1 } };
-        _service.Setup(a => a.GetAllCustomEventsAsync()).ReturnsAsync(events);
+        _service.Setup(a => a.GetCustomEventsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(events);
 
-        var result = await _subject.GetAllCustomEvents();
+        var result = await _subject.GetAllCustomEvents(TestContext.Current.CancellationToken);
 
         result.Should().BeOfType<OkObjectResult>().Which.Value.Should().BeSameAs(events);
     }
@@ -50,9 +50,9 @@ public sealed class CustomEventControllerTest : IDisposable
     public async Task GetAllCustomEventsByGame_ReturnsEventsForGame()
     {
         var events = new[] { new CustomEvent { Id = 1, GameId = "game" } };
-        _service.Setup(a => a.GetAllCustomEventsByGameIdAsync("game")).ReturnsAsync(events);
+        _service.Setup(a => a.GetCustomEventsAsync("game", It.IsAny<CancellationToken>())).ReturnsAsync(events);
 
-        var result = await _subject.GetAllCustomEventsByGame("game");
+        var result = await _subject.GetAllCustomEventsByGame("game", TestContext.Current.CancellationToken);
 
         result.Should().BeOfType<OkObjectResult>().Which.Value.Should().BeSameAs(events);
     }
@@ -62,9 +62,9 @@ public sealed class CustomEventControllerTest : IDisposable
     {
         var customEvent = new CustomEvent { Name = "Event" };
         var created = new CustomEvent { Id = 9, Name = "Event" };
-        _service.Setup(a => a.CreateCustomEventAsync(customEvent)).ReturnsAsync(created);
+        _service.Setup(a => a.CreateCustomEventAsync(customEvent, It.IsAny<CancellationToken>())).ReturnsAsync(created);
 
-        var result = await _subject.PostCustomEvent(customEvent);
+        var result = await _subject.PostCustomEvent(customEvent, TestContext.Current.CancellationToken);
 
         var createdResult = result.Should().BeOfType<CreatedResult>().Subject;
         createdResult.Location.Should().Be("gameevent");
@@ -76,19 +76,19 @@ public sealed class CustomEventControllerTest : IDisposable
     {
         _subject.ModelState.AddModelError("Name", "Required");
 
-        var result = await _subject.PostCustomEvent(new CustomEvent());
+        var result = await _subject.PostCustomEvent(new CustomEvent(), TestContext.Current.CancellationToken);
 
         result.Should().BeOfType<BadRequestObjectResult>();
-        _service.Verify(a => a.CreateCustomEventAsync(It.IsAny<CustomEvent>()), Times.Never);
+        _service.Verify(a => a.CreateCustomEventAsync(It.IsAny<CustomEvent>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
     public async Task PutCustomEvent_ReturnsUpdatedEvent()
     {
         var customEvent = new CustomEvent { Id = 2, Name = "Event" };
-        _service.Setup(a => a.UpdateCustomEventAsync(2, customEvent)).ReturnsAsync(customEvent);
+        _service.Setup(a => a.UpdateCustomEventAsync(2, customEvent, It.IsAny<CancellationToken>())).ReturnsAsync(customEvent);
 
-        var result = await _subject.PutCustomEvent(2, customEvent);
+        var result = await _subject.PutCustomEvent(2, customEvent, TestContext.Current.CancellationToken);
 
         result.Should().BeOfType<OkObjectResult>().Which.Value.Should().BeSameAs(customEvent);
     }
@@ -98,18 +98,18 @@ public sealed class CustomEventControllerTest : IDisposable
     {
         _subject.ModelState.AddModelError("Name", "Required");
 
-        var result = await _subject.PutCustomEvent(2, new CustomEvent());
+        var result = await _subject.PutCustomEvent(2, new CustomEvent(), TestContext.Current.CancellationToken);
 
         result.Should().BeOfType<BadRequestObjectResult>();
-        _service.Verify(a => a.UpdateCustomEventAsync(It.IsAny<int>(), It.IsAny<CustomEvent>()), Times.Never);
+        _service.Verify(a => a.UpdateCustomEventAsync(It.IsAny<int>(), It.IsAny<CustomEvent>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
     public async Task DeleteCustomEvent_DeletesAndReturnsNoContent()
     {
-        var result = await _subject.DeleteCustomEvent(2);
+        var result = await _subject.DeleteCustomEvent(2, TestContext.Current.CancellationToken);
 
         result.Should().BeOfType<NoContentResult>();
-        _service.Verify(a => a.DeleteCustomEventAsync(2), Times.Once);
+        _service.Verify(a => a.DeleteCustomEventAsync(2, It.IsAny<CancellationToken>()), Times.Once);
     }
 }

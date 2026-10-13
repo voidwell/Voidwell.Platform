@@ -11,6 +11,10 @@ public class CustomEventService : ICustomEventService
     private static readonly TimeSpan _eventListExpiry = TimeSpan.FromMinutes(5);
     private static readonly TimeSpan _eventDetailsExpiry = TimeSpan.FromMinutes(15);
 
+    private const string _customEventsCacheKey = "customEventlist";
+    private readonly Func<string, string> _getCustomEventsGameCacheKey = gameId => $"{_customEventsCacheKey}_{gameId}";
+    private readonly Func<int, string> _getCustomEventLogCacheKey = eventId => $"customEventLog_{eventId}";
+
     private readonly ICache _cache;
     private readonly IDaybreakGamesClient _daybreakGamesClient;
     private readonly ICustomEventRepository _customEventRepository;
@@ -22,60 +26,56 @@ public class CustomEventService : ICustomEventService
         _daybreakGamesClient = daybreakGamesClient;
     }
 
-    public async Task<IEnumerable<CustomEvent>> GetAllCustomEventsAsync()
+    public async Task<IEnumerable<CustomEvent>> GetCustomEventsAsync(CancellationToken cancellationToken)
     {
-        var events = await _customEventRepository.GetAllCustomEventsAsync();
-
-        if (events.Any())
-        {
-            await _cache.SetAsync("customEventlist", events, _eventListExpiry);
-        }
-
-        return events;
+        return await _cache.GetOrSetAsync(
+            _customEventsCacheKey,
+            ct => _customEventRepository.GetCustomEventsAsync(cancellationToken),
+            _eventListExpiry,
+            e => e.Any(),
+            cancellationToken);
     }
 
-    public async Task<IEnumerable<CustomEvent>> GetAllCustomEventsByGameIdAsync(string gameId)
+    public async Task<IEnumerable<CustomEvent>> GetCustomEventsAsync(string gameId, CancellationToken cancellationToken)
     {
-        var cacheKey = $"customEventList_{gameId}";
-
-        IEnumerable<CustomEvent>? cached = null;
-        if (await _cache.TryGetAsync<IEnumerable<CustomEvent>>(cacheKey, value => cached = value) && cached != null)
-        {
-            return cached;
-        }
-
-        var events = await _customEventRepository.GetAllCustomEventsAsync(gameId);
-
-        if (events.Any())
-        {
-            await _cache.SetAsync(cacheKey, events, _eventListExpiry);
-        }
-
-        return events;
+        return await _cache.GetOrSetAsync(
+            _getCustomEventsGameCacheKey(gameId),
+            ct => _customEventRepository.GetCustomEventsAsync(gameId, cancellationToken),
+            _eventListExpiry,
+            e => e.Any(),
+            cancellationToken);
     }
 
-    public async Task<CustomEventDetails?> GetCustomEventAsync(int eventId)
+    public async Task<CustomEventDetails?> GetCustomEventAsync(int eventId, CancellationToken cancellationToken)
     {
-        var cacheKey = $"customEventLog_{eventId}";
+        return await _cache.GetOrSetIfNotNullAsync(
+            _getCustomEventLogCacheKey(eventId),
+            ct => GetCustomEventDataAsync(eventId, ct),
+            _eventDetailsExpiry,
+            cancellationToken
+        );
+    }
 
-        CustomEventDetails? cached = null;
-        if (await _cache.TryGetAsync<CustomEventDetails>(cacheKey, value => cached = value) && cached != null)
-        {
-            return cached;
-        }
-
-        var customEvent = await _customEventRepository.GetCustomEventAsync(eventId);
+    private async Task<CustomEventDetails?> GetCustomEventDataAsync(int eventId, CancellationToken cancellationToken)
+    {
+        var customEvent = await _customEventRepository.GetCustomEventAsync(eventId, cancellationToken);
         if (customEvent == null)
         {
             return null;
         }
 
-        var reportTask = _daybreakGamesClient.GetCombatReport(customEvent.ServerId, customEvent.MapId, customEvent.StartDate, customEvent.EndDate);
-        var territoryTask = _daybreakGamesClient.GetTerritoryScoreFromDate(customEvent.ServerId, customEvent.MapId, customEvent.EndDate);
+        var reportTask = _daybreakGamesClient.GetCombatReportAsync(customEvent.ServerId, customEvent.MapId, customEvent.StartDate, customEvent.EndDate, cancellationToken);
+        var territoryTask = _daybreakGamesClient.GetTerritoryScoreFromDateAsync(customEvent.ServerId, customEvent.MapId, customEvent.EndDate, cancellationToken);
 
         await Task.WhenAll(reportTask, territoryTask);
 
-        var customEventDetails = new CustomEventDetails
+        var teams = customEvent.Teams?.Select(t => new CustomEventTeamModel
+        {
+            TeamId = t.TeamId,
+            Name = t.Name
+        });
+
+        return new CustomEventDetails
         {
             Id = customEvent.Id,
             Name = customEvent.Name,
@@ -86,28 +86,50 @@ public class CustomEventService : ICustomEventService
             EndDate = customEvent.EndDate,
             IsPrivate = customEvent.IsPrivate,
             GameId = customEvent.GameId,
-            Teams = customEvent.Teams?.Select(t => new CustomEventTeamModel { TeamId = t.TeamId, Name = t.Name }),
+            Teams = teams,
             Log = await reportTask,
             Score = await territoryTask
         };
-
-        await _cache.SetAsync(cacheKey, customEventDetails, _eventDetailsExpiry);
-
-        return customEventDetails;
     }
 
-    public Task<CustomEvent> CreateCustomEventAsync(CustomEvent customEvent)
+    public async Task<CustomEvent> CreateCustomEventAsync(CustomEvent customEvent, CancellationToken cancellationToken)
     {
-        return _customEventRepository.CreateCustomEventAsync(customEvent);
+        var result = await _customEventRepository.CreateCustomEventAsync(customEvent, cancellationToken);
+
+        await ClearEventCache(result);
+
+        return result;
     }
 
-    public Task<CustomEvent> UpdateCustomEventAsync(int eventId, CustomEvent customEvent)
+    public async Task<CustomEvent> UpdateCustomEventAsync(int eventId, CustomEvent customEvent, CancellationToken cancellationToken)
     {
-        return _customEventRepository.UpdateCustomEventAsync(customEvent);
+        var result = await _customEventRepository.UpdateCustomEventAsync(customEvent, cancellationToken);
+        
+        await ClearEventCache(result);
+
+        return result;
     }
 
-    public Task DeleteCustomEventAsync(int eventId)
+    public async Task DeleteCustomEventAsync(int eventId, CancellationToken cancellationToken)
     {
-        return _customEventRepository.RemoveCustomEventAsync(eventId);
+        var customEvent = await _customEventRepository.GetCustomEventAsync(eventId, cancellationToken);
+        if (customEvent == null)
+        {
+            return;
+        }
+
+        await _customEventRepository.RemoveCustomEventAsync(customEvent, cancellationToken);
+        await ClearEventCache(customEvent);
+    }
+
+    private async Task ClearEventCache(CustomEvent customEvent)
+    {
+        await _cache.RemoveAsync(_customEventsCacheKey);
+        await _cache.RemoveAsync(_getCustomEventLogCacheKey(customEvent.Id));
+
+        if (customEvent.GameId != null)
+        {
+            await _cache.RemoveAsync(_getCustomEventsGameCacheKey(customEvent.GameId));
+        }
     }
 }
