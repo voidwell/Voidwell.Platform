@@ -104,7 +104,7 @@ public class CustomEventService : ICustomEventService
     public async Task<CustomEvent> UpdateCustomEventAsync(int eventId, CustomEvent customEvent, CancellationToken cancellationToken)
     {
         var result = await _customEventRepository.UpdateCustomEventAsync(customEvent, cancellationToken);
-        
+
         await ClearEventCache(result);
 
         return result;
