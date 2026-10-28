@@ -20,7 +20,7 @@ public class SwaggerTest
     public async Task SwaggerDocument_MarksOnlyAuthorizedOperationsWithSecurity()
     {
         var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string> { ["ApplicationName"] = "Voidwell.Platform" })
+            .AddInMemoryCollection(new Dictionary<string, string> { ["AppName"] = "Voidwell.Platform" })
             .Build();
 
         using var host = new HostBuilder()
