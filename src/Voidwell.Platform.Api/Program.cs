@@ -64,6 +64,8 @@ app.InitializeDatabases();
 
 app.UseForwardedHeaders(GetForwardedHeaderOptions());
 
+app.UseApplicationRequestLogging();
+
 app.UseApiSwagger();
 
 app.UseRouting();
