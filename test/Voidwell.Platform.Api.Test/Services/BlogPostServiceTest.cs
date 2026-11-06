@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Voidwell.Platform.Api.Services;
 using Voidwell.Platform.Api.Services.Mappers;
+using Voidwell.Platform.Clients;
 using Voidwell.Platform.Clients.Keycloak;
 using Voidwell.Platform.Clients.Keycloak.Models;
 using Voidwell.Platform.Data.Repositories;
@@ -27,7 +28,7 @@ public class BlogPostServiceTest
         var mapper = new MapperConfiguration(cfg => cfg.AddMaps(Assembly.GetAssembly(typeof(BlogPostMapper))), NullLoggerFactory.Instance)
             .CreateMapper();
 
-        _subject = new BlogPostService(_mockBlogPostRepository, mapper, _mockKeycloakClient);
+        _subject = new BlogPostService(_mockBlogPostRepository, mapper, _mockKeycloakClient, NullLogger<BlogPostService>.Instance);
     }
 
     [Fact]
@@ -90,6 +91,46 @@ public class BlogPostServiceTest
 
         _mockBlogPostRepository.AsMock().Verify();
         _mockKeycloakClient.AsMock().Verify();
+    }
+
+    [Fact]
+    public async Task GetBlogPostsByPageAsync_UsesFallbackAuthorName_WhenAuthorLookupFails()
+    {
+        var testBlogPost1 = GenerateTestBlogPost();
+        var testBlogPost2 = GenerateTestBlogPost();
+
+        _mockBlogPostRepository.AsMock()
+            .Setup(a => a.GetBlogPostsAsync(0, It.IsAny<int>()))
+            .ReturnsAsync(new[] { testBlogPost1.Item2, testBlogPost2.Item2 });
+        _mockKeycloakClient.AsMock()
+            .Setup(a => a.GetDisplayNamesAsync(It.IsAny<IEnumerable<Guid>>()))
+            .ThrowsAsync(new ClientResponseException(401));
+
+        var result = (await _subject.GetBlogPostsByPageAsync(0)).ToList();
+
+        result.Should().HaveCount(2);
+        result.Should().OnlyContain(p => p.AuthorName == BlogPostService.FallbackAuthorName);
+        result.Select(p => p.Id).Should().BeEquivalentTo(new[] { testBlogPost1.Item1.Id, testBlogPost2.Item1.Id });
+    }
+
+    [Fact]
+    public async Task GetBlogPostByIdAsync_UsesFallbackAuthorName_WhenAuthorLookupFails()
+    {
+        var expectedBlogPostId = Guid.NewGuid();
+        var testBlogPost = GenerateTestBlogPost(blogPostId: expectedBlogPostId);
+        var expectedBlogPost = testBlogPost.Item1;
+        expectedBlogPost.AuthorName = BlogPostService.FallbackAuthorName;
+
+        _mockBlogPostRepository.AsMock()
+            .Setup(a => a.GetBlogPostAsync(expectedBlogPostId))
+            .ReturnsAsync(testBlogPost.Item2);
+        _mockKeycloakClient.AsMock()
+            .Setup(a => a.GetDisplayNameAsync(It.IsAny<Guid>()))
+            .ThrowsAsync(new HttpRequestException("Keycloak unreachable"));
+
+        var result = await _subject.GetBlogPostByIdAsync(expectedBlogPostId);
+
+        result.Should().BeEquivalentTo(expectedBlogPost);
     }
 
     [Fact]
