@@ -14,7 +14,7 @@ Backend API for Voidwell's platform features: the blog and custom game events. I
 | PostgreSQL | any supported release | Primary data store (EF Core + Npgsql); migrations run automatically on startup |
 | Redis | optional | Shared cache (FusionCache L2 + backplane). If `RedisConfiguration` is empty, caching is in-memory per instance |
 | Voidwell auth server (`http://voidwellauth:5000`) | n/a | Validates incoming JWT / reference tokens, and issues the client-credentials tokens used to call Keycloak and Voidwell.DaybreakGames |
-| Keycloak (Admin REST API) | n/a | Resolves blog author display names. Needs a service-account client with the realm-management `view-users` role |
+| Keycloak (Admin REST API) | n/a | Resolves blog author display names. Needs a service-account client with the realm-management `view-users` role and, on Keycloak 26.8.2 or later, the `kc-admin-api` client scope as a default scope. If the lookup fails, posts are still returned with an empty author name and a warning is logged |
 | Voidwell.DaybreakGames API (`https://api.voidwell.com/ps2` by default) | n/a | Combat report and territory data for custom events |
 | Docker | optional | Container build and deployment |
 

@@ -22,7 +22,7 @@ public class BlogPostServiceMissingPostTest
         var mapper = new MapperConfiguration(cfg => cfg.AddMaps(typeof(BlogPostMapper).Assembly), NullLoggerFactory.Instance)
             .CreateMapper();
 
-        _subject = new BlogPostService(_repository.Object, mapper, _keycloakClient.Object);
+        _subject = new BlogPostService(_repository.Object, mapper, _keycloakClient.Object, NullLogger<BlogPostService>.Instance);
     }
 
     [Fact]

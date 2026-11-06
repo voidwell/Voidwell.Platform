@@ -1,21 +1,27 @@
 using AutoMapper;
 using Voidwell.Platform.Api.Models;
 using Voidwell.Platform.Clients.Keycloak;
+using Voidwell.Platform.Clients.Keycloak.Models;
 using Voidwell.Platform.Data.Repositories;
 
 namespace Voidwell.Platform.Api.Services;
 
 public class BlogPostService : IBlogPostService
 {
+    /// <summary>Author name used when the display name lookup fails, so posts still load.</summary>
+    public const string FallbackAuthorName = "";
+
     private readonly IBlogPostRepository _blogPostRepository;
     private readonly IMapper _mapper;
     private readonly IKeycloakClient _keycloakClient;
+    private readonly ILogger<BlogPostService> _logger;
 
-    public BlogPostService(IBlogPostRepository blogPostRepository, IMapper mapper, IKeycloakClient keycloakClient)
+    public BlogPostService(IBlogPostRepository blogPostRepository, IMapper mapper, IKeycloakClient keycloakClient, ILogger<BlogPostService> logger)
     {
         _blogPostRepository = blogPostRepository;
         _mapper = mapper;
         _keycloakClient = keycloakClient;
+        _logger = logger;
     }
 
     public async Task<IEnumerable<BlogPost>> GetBlogPostsByPageAsync(int page)
@@ -23,9 +29,20 @@ public class BlogPostService : IBlogPostService
         var storeBlogPosts = await _blogPostRepository.GetBlogPostsAsync(page, 10);
 
         var authorMap = storeBlogPosts.ToDictionary(a => a.Id, a => a.AuthorId);
-        var authorNames = await _keycloakClient.GetDisplayNamesAsync(authorMap.Values.Distinct());
-
         var blogPosts = _mapper.Map<IEnumerable<BlogPost>>(storeBlogPosts).ToList();
+
+        IEnumerable<DisplayName> authorNames;
+        try
+        {
+            authorNames = await _keycloakClient.GetDisplayNamesAsync(authorMap.Values.Distinct());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to resolve blog post author names");
+            blogPosts.ForEach(p => p.AuthorName = FallbackAuthorName);
+            return blogPosts;
+        }
+
         blogPosts.ForEach(p => p.AuthorName = authorNames.FirstOrDefault(n => n.UserId == authorMap[p.Id])?.Name);
 
         return blogPosts;
@@ -40,7 +57,15 @@ public class BlogPostService : IBlogPostService
         }
 
         var blogPost = _mapper.Map<BlogPost>(storeBlogPost);
-        blogPost.AuthorName = (await _keycloakClient.GetDisplayNameAsync(storeBlogPost.AuthorId))?.Name;
+        try
+        {
+            blogPost.AuthorName = (await _keycloakClient.GetDisplayNameAsync(storeBlogPost.AuthorId))?.Name;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to resolve author name for blog post {BlogPostId}", blogPostId);
+            blogPost.AuthorName = FallbackAuthorName;
+        }
 
         return blogPost;
     }
